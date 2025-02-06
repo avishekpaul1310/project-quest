@@ -1,0 +1,23 @@
+[
+    {
+        "model": "game.mission",
+        "pk": 1,
+        "fields": {
+            "title": "Introduction to Project Management & Project Charter",
+            "order": 1,
+            "key_concepts": "• Project charter formally authorizes a project\n• Defines project objectives and scope\n• Identifies key stakeholders",
+            "best_practices": "• Ensure alignment with business goals\n• Get stakeholder buy-in early\n• Keep it clear and concise",
+            "is_active": true
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 1,
+        "fields": {
+            "mission": 1,
+            "text": "What is the primary purpose of a project charter?",
+            "order": 1,
+            "explanation": "A project charter formally authorizes the project and provides the project manager with the authority to apply organizational resources to project activities."
+        }
+    }
+]
