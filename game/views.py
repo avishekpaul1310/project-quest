@@ -1,6 +1,7 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.urls import reverse
 from .models import Mission, Question, Choice, PlayerAnswer
 
 @login_required
@@ -78,3 +79,67 @@ def submit_answer(request, mission_id):
     
     player_profile.save()
     return redirect('game:dashboard')
+
+@login_required
+def take_quiz(request, mission_id):
+    """View for taking a mission quiz"""
+    mission = get_object_or_404(Mission, pk=mission_id)
+    player = request.user.playerprofile
+
+    # Check if user can access this mission
+    if not player.can_access_mission(mission):
+        messages.error(request, 'Please complete previous missions first.')
+        return redirect('game:dashboard')
+
+    # Get questions for this mission
+    questions = mission.questions.all().order_by('order')
+
+    if request.method == 'POST':
+        score = 0
+        total_questions = questions.count()
+        
+        for question in questions:
+            choice_id = request.POST.get(f'question_{question.id}')
+            if choice_id:
+                choice = Choice.objects.get(id=choice_id)
+                # Create or update player's answer
+                PlayerAnswer.objects.update_or_create(
+                    player=player,
+                    question=question,
+                    defaults={'selected_choice': choice}
+                )
+                if choice.is_correct:
+                    score += 10  # 10 points per correct answer
+
+        # Update player's score
+        player.total_score += score
+        if score == total_questions * 10:  # All answers correct
+            player.completed_missions.add(mission)
+            messages.success(request, f'Congratulations! You completed the mission with {score} points!')
+        else:
+            messages.info(request, f'You scored {score} points. Try again to complete the mission!')
+        
+        player.save()
+        return redirect('game:mission_results', mission_id=mission_id)
+
+    return render(request, 'game/take_quiz.html', {
+        'mission': mission,
+        'questions': questions,
+    })
+
+@login_required
+def mission_results(request, mission_id):
+    """View for showing quiz results"""
+    mission = get_object_or_404(Mission, pk=mission_id)
+    player = request.user.playerprofile
+    
+    # Get player's answers for this mission
+    answers = PlayerAnswer.objects.filter(
+        player=player,
+        question__mission=mission
+    ).select_related('question', 'selected_choice')
+
+    return render(request, 'game/mission_results.html', {
+        'mission': mission,
+        'answers': answers,
+    })

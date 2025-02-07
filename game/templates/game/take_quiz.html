@@ -1,0 +1,40 @@
+{% extends 'game/base.html' %}
+
+{% block content %}
+<div class="quiz-container">
+    <h2>{{ mission.title }}</h2>
+    
+    <div class="mission-content">
+        <h3>Key Concepts</h3>
+        <div class="key-concepts">
+            {{ mission.key_concepts|linebreaks }}
+        </div>
+        
+        <h3>Best Practices</h3>
+        <div class="best-practices">
+            {{ mission.best_practices|linebreaks }}
+        </div>
+    </div>
+
+    <form method="post" class="quiz-form">
+        {% csrf_token %}
+        {% for question in questions %}
+        <div class="question">
+            <h4>Question {{ question.order }}: {{ question.text }}</h4>
+            {% for choice in question.choices.all %}
+            <div class="choice">
+                <input type="radio" 
+                       name="question_{{ question.id }}" 
+                       id="choice_{{ choice.id }}"
+                       value="{{ choice.id }}"
+                       required>
+                <label for="choice_{{ choice.id }}">{{ choice.text }}</label>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        
+        <button type="submit" class="submit-button">Submit Answers</button>
+    </form>
+</div>
+{% endblock %}
