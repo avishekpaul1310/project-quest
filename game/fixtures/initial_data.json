@@ -3,21 +3,22 @@
         "model": "game.mission",
         "pk": 1,
         "fields": {
-            "title": "Introduction to Project Management & Project Charter",
+            "title": "Project Charter Basics",
             "order": 1,
-            "key_concepts": "• Project charter formally authorizes a project\n• Defines project objectives and scope\n• Identifies key stakeholders",
-            "best_practices": "• Ensure alignment with business goals\n• Get stakeholder buy-in early\n• Keep it clear and concise",
+            "key_concepts": "• Project charter defines project\n• Authorizes project formally\n• Defines project objectives and scope",
+            "best_practices": "• Align with business goals\n• Identify stakeholders early\n• Be clear and concise",
             "is_active": true
         }
     },
     {
-        "model": "game.question",
-        "pk": 1,
+        "model": "game.mission",
+        "pk": 2,
         "fields": {
-            "mission": 1,
-            "text": "What is the primary purpose of a project charter?",
-            "order": 1,
-            "explanation": "A project charter formally authorizes the project and provides the project manager with the authority to apply organizational resources to project activities."
+            "title": "Stakeholder Engagement",
+            "order": 2,
+            "key_concepts": "• Identify all stakeholders\n• Analyze stakeholder interests\n• Plan engagement strategies",
+            "best_practices": "• Regular communication\n• Address concerns early\n• Document stakeholder requirements",
+            "is_active": true
         }
     }
 ]

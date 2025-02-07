@@ -1,10 +1,35 @@
-{% extends 'game/base.html' %}
-
-{% block title %}Mission Details{% endblock %}
+{% extends 'base.html' %}
 
 {% block content %}
-<h1>Mission Details</h1>
-<div class="mission-content">
-    <!-- Placeholder for mission content -->
+<div class="mission-detail">
+    <h2>{{ mission.title }}</h2>
+    
+    <div class="mission-content">
+        <h3>Key Concepts</h3>
+        <pre>{{ mission.key_concepts }}</pre>
+        
+        <h3>Best Practices</h3>
+        <pre>{{ mission.best_practices }}</pre>
+    </div>
+
+    {% if questions %}
+        <form method="post">
+            {% csrf_token %}
+            {% for question in questions %}
+                <div class="question">
+                    <h4>{{ question.text }}</h4>
+                    {% for choice in question.choices.all %}
+                        <label>
+                            <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" required>
+                            {{ choice.text }}
+                        </label>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            <button type="submit">Submit Answers</button>
+        </form>
+    {% else %}
+        <p>No questions available for this mission yet.</p>
+    {% endif %}
 </div>
 {% endblock %}

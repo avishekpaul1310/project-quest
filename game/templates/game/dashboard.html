@@ -1,10 +1,23 @@
-{% extends 'game/base.html' %}
-
-{% block title %}Dashboard{% endblock %}
+{% extends 'base.html' %}
 
 {% block content %}
-<h1>Mission Dashboard</h1>
-<div class="row">
-    <!-- Placeholder for missions -->
+<div class="dashboard">
+    <h2>Your Progress</h2>
+    <p>Total Score: {{ player_profile.total_score }}</p>
+    <p>Current Mission: {{ player_profile.current_mission.title }}</p>
+
+    <h3>Available Missions</h3>
+    {% for mission in missions %}
+        <div class="mission-card">
+            <h2>{{ mission.title }}</h2>
+            {% if mission in player_profile.completed_missions.all %}
+                <p>✅ Completed</p>
+            {% elif player_profile.can_access_mission %}
+                <a href="{% url 'game:mission_detail' mission.id %}">Start Mission</a>
+            {% else %}
+                <p>🔒 Complete previous missions first</p>
+            {% endif %}
+        </div>
+    {% endfor %}
 </div>
 {% endblock %}

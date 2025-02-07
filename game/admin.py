@@ -3,8 +3,9 @@ from .models import Mission, Question, Choice, PlayerProfile, PlayerAnswer
 
 @admin.register(Mission)
 class MissionAdmin(admin.ModelAdmin):
-    list_display = ('order', 'title', 'is_active')
+    list_display = ('title', 'order', 'is_active')
     list_filter = ('is_active',)
+    search_fields = ('title',)
     ordering = ('order',)
 
 class ChoiceInline(admin.TabularInline):
@@ -19,15 +20,22 @@ class QuestionAdmin(admin.ModelAdmin):
     inlines = [ChoiceInline]
     ordering = ('mission', 'order')
 
+@admin.register(Choice)
+class ChoiceAdmin(admin.ModelAdmin):
+    list_display = ('question', 'text', 'is_correct')
+    list_filter = ('question__mission', 'is_correct')
+    search_fields = ('text',)    
+
 @admin.register(PlayerProfile)
 class PlayerProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'total_score', 'current_mission', 'missions_completed')
-    filter_horizontal = ('completed_missions',)
-    
-    def missions_completed(self, obj):
-        return obj.completed_missions.count()
+    list_display = ('user', 'total_score', 'current_mission')
+    list_filter = ('current_mission',)
+    search_fields = ('user__username',)
+    readonly_fields = ('total_score',)
 
 @admin.register(PlayerAnswer)
 class PlayerAnswerAdmin(admin.ModelAdmin):
-    list_display = ('player', 'question', 'is_correct')
+    list_display = ('player', 'question', 'selected_choice', 'is_correct')
     list_filter = ('is_correct', 'question__mission')
+    search_fields = ('player__user__username',)
+    readonly_fields = ('is_correct',)
