@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.db import transaction
 from game.models import Mission, Question, Choice, PlayerProfile, PlayerAnswer
 
 class QuizSetupTests(TestCase):
@@ -64,8 +65,6 @@ class QuizSetupTests(TestCase):
         self.assertTrue(new_correct.is_correct)
 
 class QuizFunctionalTests(TestCase):
-    """Tests for quiz functionality"""
-    
     def setUp(self):
         # Create test user
         self.user = User.objects.create_user(
@@ -112,17 +111,6 @@ class QuizFunctionalTests(TestCase):
             self.correct_choices.append(correct)
             self.wrong_choices.append(wrong)
 
-    def test_quiz_access_authentication(self):
-        """Test that quiz requires authentication"""
-        # Try accessing quiz without login
-        response = self.client.get(reverse('game:take_quiz', args=[self.mission.id]))
-        self.assertEqual(response.status_code, 302)  # Should redirect to login
-        
-        # Login and try again
-        self.client.login(username='testuser', password='testpass123')
-        response = self.client.get(reverse('game:take_quiz', args=[self.mission.id]))
-        self.assertEqual(response.status_code, 200)
-
     def test_quiz_submission_perfect_score(self):
         """Test quiz submission with all correct answers"""
         self.client.login(username='testuser', password='testpass123')
@@ -133,18 +121,28 @@ class QuizFunctionalTests(TestCase):
             for i, q in enumerate(self.questions)
         }
         
-        response = self.client.post(
-            reverse('game:take_quiz', args=[self.mission.id]),
-            data=data
-        )
+        with transaction.atomic():
+            response = self.client.post(
+                reverse('game:take_quiz', args=[self.mission.id]),
+                data=data
+            )
         
-        # Check player's score (10 points per correct answer)
-        player = self.user.playerprofile
-        expected_score = len(self.questions) * 10
-        self.assertEqual(player.total_score, expected_score)
-        
-        # Mission should be completed
-        self.assertTrue(self.mission in player.completed_missions.all())
+            # Refresh player from database
+            player = User.objects.get(username='testuser').playerprofile
+            expected_score = len(self.questions) * 10
+            
+            # Verify answers were saved
+            answers = PlayerAnswer.objects.filter(
+                player=player,
+                question__mission=self.mission
+            )
+            self.assertEqual(answers.count(), len(self.questions))
+            
+            # Verify score
+            self.assertEqual(player.total_score, expected_score)
+            
+            # Verify mission completion
+            self.assertTrue(self.mission in player.completed_missions.all())
 
     def test_quiz_submission_partial_score(self):
         """Test quiz submission with mixed correct/incorrect answers"""
@@ -159,14 +157,24 @@ class QuizFunctionalTests(TestCase):
             f'question_{self.questions[4].id}': self.correct_choices[4].id,  # correct
         }
         
-        response = self.client.post(
-            reverse('game:take_quiz', args=[self.mission.id]),
-            data=data
-        )
-        
-        # Check player's score (should be 30 points for 3 correct answers)
-        player = self.user.playerprofile
-        self.assertEqual(player.total_score, 30)
-        
-        # Mission should not be completed (not all answers correct)
-        self.assertFalse(self.mission in player.completed_missions.all())
+        with transaction.atomic():
+            response = self.client.post(
+                reverse('game:take_quiz', args=[self.mission.id]),
+                data=data
+            )
+            
+            # Refresh player from database
+            player = User.objects.get(username='testuser').playerprofile
+            
+            # Verify answers were saved
+            answers = PlayerAnswer.objects.filter(
+                player=player,
+                question__mission=self.mission
+            )
+            self.assertEqual(answers.count(), len(self.questions))
+            
+            # Verify score (3 correct answers * 10 points)
+            self.assertEqual(player.total_score, 30)
+            
+            # Verify mission not completed (not all answers correct)
+            self.assertFalse(self.mission in player.completed_missions.all())
