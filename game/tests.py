@@ -86,18 +86,19 @@ class ModelTests(TestCase):
 
 class PlayerProgressTests(TestCase):
     def setUp(self):
-        # Create test user and mission data
-        self.user = User.objects.create_user(
-            username='testplayer',
-            password='testpass123'
-        )
-        
+        # Create mission first
         self.mission = Mission.objects.create(
             title='Test Mission',
             order=1,
             key_concepts='Test concepts',
             best_practices='Test practices',
             is_active=True
+        )
+        
+        # Create test user after mission exists
+        self.user = User.objects.create_user(
+            username='testplayer',
+            password='testpass123'
         )
         
         self.question = Question.objects.create(
