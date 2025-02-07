@@ -129,18 +129,18 @@ class PlayerProgressTests(TestCase):
     def test_answer_recording(self):
         """Test that player answers are recorded correctly"""
         # Record correct answer
-        answer = PlayerAnswer.objects.create(
+        answer, created = PlayerAnswer.objects.update_or_create(
             player=self.profile,
             question=self.question,
-            selected_choice=self.correct_choice
+            defaults={'selected_choice': self.correct_choice}
         )
         self.assertTrue(answer.is_correct)
         
-        # Record wrong answer
-        answer = PlayerAnswer.objects.create(
+        # Record wrong answer (updating the previous answer)
+        answer, created = PlayerAnswer.objects.update_or_create(
             player=self.profile,
             question=self.question,
-            selected_choice=self.wrong_choice
+            defaults={'selected_choice': self.wrong_choice}
         )
         self.assertFalse(answer.is_correct)
 

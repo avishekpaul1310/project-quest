@@ -1,81 +1,36 @@
-{% extends 'base.html' %}
+{% extends 'game/base.html' %}
+
+{% block title %}{{ mission.title }} - Project Management Quest{% endblock %}
 
 {% block content %}
 <div class="mission-detail">
     <h2>{{ mission.title }}</h2>
-    
     <div class="mission-content">
         <h3>Key Concepts</h3>
-        <pre>{{ mission.key_concepts }}</pre>
+        <p>{{ mission.key_concepts }}</p>
         
         <h3>Best Practices</h3>
-        <pre>{{ mission.best_practices }}</pre>
-    </div>
-
-    {% if questions %}
+        <p>{{ mission.best_practices }}</p>
+        
         <form method="post" action="{% url 'game:submit_answer' mission.id %}">
             {% csrf_token %}
             {% for question in questions %}
-                <div class="question">
-                    <h4>{{ question.text }}</h4>
-                    {% for choice in question.choice_set.all %}
-                        <div class="choice">
-                            <label>
-                                <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" required>
-                                {{ choice.text }}
-                            </label>
-                        </div>
-                    {% endfor %}
+            <div class="question">
+                <h4>{{ question.text }}</h4>
+                {% for choice in question.choices.all %}
+                <div class="choice">
+                    <input type="radio" 
+                           name="question_{{ question.id }}" 
+                           id="choice_{{ choice.id }}"
+                           value="{{ choice.id }}"
+                           required>
+                    <label for="choice_{{ choice.id }}">{{ choice.text }}</label>
                 </div>
+                {% endfor %}
+            </div>
             {% endfor %}
-            <button type="submit" class="submit-btn">Submit Answers</button>
+            <button type="submit">Submit Answers</button>
         </form>
-    {% else %}
-        <p>No questions available for this mission yet.</p>
-    {% endif %}
+    </div>
 </div>
-
-<style>
-    .mission-detail {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-    .mission-content {
-        background-color: #f8f9fa;
-        padding: 20px;
-        border-radius: 5px;
-        margin-bottom: 30px;
-    }
-    .question {
-        margin-bottom: 30px;
-        padding: 20px;
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-    }
-    .choice {
-        margin: 10px 0;
-    }
-    .choice label {
-        display: block;
-        padding: 10px;
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-    .choice label:hover {
-        background-color: #f8f9fa;
-    }
-    .submit-btn {
-        padding: 10px 20px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-    .submit-btn:hover {
-        background-color: #0056b3;
-    }
-</style>
 {% endblock %}

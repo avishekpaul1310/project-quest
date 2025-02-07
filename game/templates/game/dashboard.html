@@ -1,23 +1,26 @@
 {% extends 'game/base.html' %}
 
+{% block title %}Dashboard - Project Management Quest{% endblock %}
+
 {% block content %}
 <div class="dashboard">
     <h2>Your Progress</h2>
     <p>Total Score: {{ player_profile.total_score }}</p>
-    <p>Current Mission: {{ player_profile.current_mission.title }}</p>
-
-    <h3>Available Missions</h3>
-    {% for mission in missions %}
-        <div class="mission-card">
-            <h2>{{ mission.title }}</h2>
+    
+    <div class="missions">
+        {% for mission in missions %}
+        <div class="mission-card {% if mission == player_profile.current_mission %}current{% endif %}">
+            <h3>{{ mission.title }}</h3>
             {% if mission in player_profile.completed_missions.all %}
-                <p>✅ Completed</p>
-            {% elif player_profile.can_access_mission %}
-                <a href="{% url 'game:mission_detail' mission.id %}">Start Mission</a>
+                <span class="status completed">Completed</span>
+            {% elif mission == player_profile.current_mission %}
+                <span class="status current">Current Mission</span>
+                <a href="{% url 'game:mission_detail' mission.id %}" class="button">Start Mission</a>
             {% else %}
-                <p>🔒 Complete previous missions first</p>
+                <span class="status locked">Locked</span>
             {% endif %}
         </div>
-    {% endfor %}
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}
