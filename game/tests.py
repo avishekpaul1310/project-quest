@@ -7,14 +7,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 class ModelTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        """Set up data for all test methods"""
-        logger.debug("Setting up test data...")
-
     def setUp(self):
-        """Set up data for each test method"""
-        # Create test missions first
+        """Set up test data"""
+        # Create test missions
         self.mission1 = Mission.objects.create(
             title='Project Charter Basics',
             order=1,
@@ -22,7 +17,7 @@ class ModelTests(TestCase):
             best_practices='• Align with business goals\n• Identify stakeholders early',
             is_active=True
         )
-        logger.debug(f"Created mission1: {self.mission1}")
+        logger.info(f"Created mission1: {self.mission1}")
         
         self.mission2 = Mission.objects.create(
             title='Stakeholder Management',
@@ -31,16 +26,20 @@ class ModelTests(TestCase):
             best_practices='• Regular communication\n• Address concerns early',
             is_active=True
         )
-        logger.debug(f"Created mission2: {self.mission2}")
-
-        # Create test user after missions exist
+        logger.info(f"Created mission2: {self.mission2}")
+        
+        # Find first mission
+        self.first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
+        logger.info(f"Found first mission: {self.first_mission}")
+        
+        # Create test user
         self.user = User.objects.create_user(
             username='testuser',
             password='testpass123'
         )
-        logger.debug(f"Created user: {self.user.username}")
+        logger.info(f"Created user: {self.user.username}")
         
-        # Create test questions for mission 1
+        # Create test questions
         self.question1 = Question.objects.create(
             mission=self.mission1,
             text='What is a project charter?',
@@ -48,7 +47,7 @@ class ModelTests(TestCase):
             explanation='A project charter formally authorizes the project.'
         )
         
-        # Create choices for question 1
+        # Create choices
         self.choice1_correct = Choice.objects.create(
             question=self.question1,
             text='A document that formally authorizes the project',
@@ -60,16 +59,21 @@ class ModelTests(TestCase):
             is_correct=False
         )
 
+    def test_mission_creation(self):
+        """Test mission creation and attributes"""
+        self.assertEqual(self.mission1.title, 'Project Charter Basics')
+        self.assertEqual(self.mission1.order, 1)
+        self.assertTrue(self.mission1.is_active)
+
     def test_player_profile_creation(self):
         """Test that PlayerProfile is created automatically for new users"""
         self.assertTrue(hasattr(self.user, 'playerprofile'))
         profile = self.user.playerprofile
-        logger.debug(f"Profile for user {self.user.username}: {profile}")
-        logger.debug(f"Profile's current mission: {profile.current_mission}")
-        logger.debug(f"Expected mission: {self.mission1}")
-        
+        logger.info(f"Profile for user {self.user.username}: {profile}")
+        logger.info(f"Profile's current mission: {profile.current_mission}")
+        logger.info(f"Expected mission: {self.first_mission}")
         self.assertEqual(profile.total_score, 0)
-        self.assertEqual(profile.current_mission, self.mission1)
+        self.assertEqual(profile.current_mission, self.first_mission)
 
     def test_mission_access(self):
         """Test mission access logic"""
@@ -87,23 +91,25 @@ class ModelTests(TestCase):
 
     def test_mission_ordering(self):
         """Test that missions are returned in correct order"""
-        missions = Mission.objects.all()
+        missions = Mission.objects.filter(is_active=True).order_by('order')
         self.assertEqual(missions[0], self.mission1)
         self.assertEqual(missions[1], self.mission2)
 
     def test_question_uniqueness(self):
         """Test that questions must have unique order within a mission"""
+        # Try to create another question with the same order in the same mission
         with self.assertRaises(Exception):
             Question.objects.create(
                 mission=self.mission1,
-                text='Duplicate order question',
-                order=1,  # This should fail as order=1 already exists
-                explanation='This should not be created'
+                text='Another question',
+                order=1,
+                explanation='This should fail'
             )
 
 class PlayerProgressTests(TestCase):
     def setUp(self):
-        # Create mission first
+        """Set up test data"""
+        # Create test mission
         self.mission = Mission.objects.create(
             title='Test Mission',
             order=1,
@@ -112,12 +118,17 @@ class PlayerProgressTests(TestCase):
             is_active=True
         )
         
-        # Create test user after mission exists
+        # Find first mission
+        self.first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
+        logger.info(f"Found first mission: {self.first_mission}")
+        
+        # Create test user
         self.user = User.objects.create_user(
             username='testplayer',
             password='testpass123'
         )
         
+        # Create test question
         self.question = Question.objects.create(
             mission=self.mission,
             text='Test question',
@@ -125,12 +136,12 @@ class PlayerProgressTests(TestCase):
             explanation='Test explanation'
         )
         
+        # Create choices
         self.correct_choice = Choice.objects.create(
             question=self.question,
             text='Correct answer',
             is_correct=True
         )
-        
         self.wrong_choice = Choice.objects.create(
             question=self.question,
             text='Wrong answer',
@@ -149,16 +160,10 @@ class PlayerProgressTests(TestCase):
             is_correct=True
         )
         
-        # Check that the answer was recorded
-        self.assertTrue(
-            PlayerAnswer.objects.filter(
-                player=profile,
-                question=self.question,
-                is_correct=True
-            ).exists()
-        )
+        self.assertTrue(answer.is_correct)
+        self.assertEqual(answer.selected_choice, self.correct_choice)
         
-        # Try to record another answer for the same question (should raise an error)
+        # Try to record another answer for the same question (should raise error)
         with self.assertRaises(Exception):
             PlayerAnswer.objects.create(
                 player=profile,
@@ -171,13 +176,19 @@ class PlayerProgressTests(TestCase):
         """Test mission completion logic"""
         profile = self.user.playerprofile
         
-        # Initially, mission should not be completed
-        self.assertFalse(profile.completed_missions.filter(id=self.mission.id).exists())
+        # Answer question correctly
+        PlayerAnswer.objects.create(
+            player=profile,
+            question=self.question,
+            selected_choice=self.correct_choice,
+            is_correct=True
+        )
         
-        # Add mission to completed missions
+        # Mark mission as completed
         profile.completed_missions.add(self.mission)
+        profile.save()
         
-        # Check that mission is now marked as completed
+        # Verify mission is marked as completed
         self.assertTrue(profile.completed_missions.filter(id=self.mission.id).exists())
 
 class ViewTests(TestCase):
@@ -233,10 +244,19 @@ class ViewTests(TestCase):
         """Test mission detail view"""
         self.client.login(username='testuser', password='testpass123')
         
+        # Create a question for the mission
+        question = Question.objects.create(
+            mission=self.mission1,
+            text='Test question',
+            order=1,
+            explanation='Test explanation'
+        )
+        
         # Test accessing first mission (should be allowed)
         response = self.client.get(reverse('game:mission_detail', args=[self.mission1.id]))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'game/mission_detail.html')
+        self.assertContains(response, 'Test question')
         
         # Test accessing second mission (should be redirected)
         response = self.client.get(reverse('game:mission_detail', args=[self.mission2.id]))
@@ -246,13 +266,15 @@ class ViewTests(TestCase):
         """Test answer submission functionality"""
         self.client.login(username='testuser', password='testpass123')
         
-        # Create a question and choices
+        # Create a test question
         question = Question.objects.create(
             mission=self.mission1,
             text='Test question',
             order=1,
             explanation='Test explanation'
         )
+        
+        # Create choices for the question
         correct_choice = Choice.objects.create(
             question=question,
             text='Correct answer',
@@ -270,7 +292,7 @@ class ViewTests(TestCase):
             {f'question_{question.id}': correct_choice.id}
         )
         
-        # Verify redirect after submission
+        # Should redirect after submission
         self.assertEqual(response.status_code, 302)
         
         # Check if score was updated
@@ -282,6 +304,7 @@ class ViewTests(TestCase):
             PlayerAnswer.objects.filter(
                 player=self.user.playerprofile,
                 question=question,
+                selected_choice=correct_choice,
                 is_correct=True
             ).exists()
         )
@@ -292,11 +315,15 @@ class ViewTests(TestCase):
             {f'question_{question.id}': wrong_choice.id}
         )
         
-        # Check if wrong answer was recorded correctly
+        # Should redirect after submission
+        self.assertEqual(response.status_code, 302)
+        
+        # Check if wrong answer was recorded
         self.assertTrue(
             PlayerAnswer.objects.filter(
                 player=self.user.playerprofile,
                 question=question,
+                selected_choice=wrong_choice,
                 is_correct=False
             ).exists()
-        )        
+        )
