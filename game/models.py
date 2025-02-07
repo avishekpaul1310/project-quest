@@ -37,7 +37,7 @@ class Choice(models.Model):
 
 class PlayerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    completed_missions = models.ManyToManyField(Mission, blank=True)
+    completed_missions = models.ManyToManyField(Mission, blank=True, related_name='completed_by')
     total_score = models.IntegerField(default=0)
     current_mission = models.ForeignKey(
         Mission, 
@@ -50,12 +50,14 @@ class PlayerProfile(models.Model):
     def __str__(self):
         return f"{self.user.username}'s Profile"
     
-    def can_access_mission(self, mission):
-        if mission.order == 1:
-            return True
-        prev_mission = Mission.objects.filter(order=mission.order - 1).first()
-        return prev_mission and self.completed_missions.filter(id=prev_mission.id).exists()
-
+    def save(self, *args, **kwargs):
+        # If this is a new profile (no ID) and no current_mission is set
+        if not self.pk and not self.current_mission:
+            # Set the first active mission as current_mission
+            first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
+            self.current_mission = first_mission
+        super().save(*args, **kwargs)
+        
 class PlayerAnswer(models.Model):
     player = models.ForeignKey(PlayerProfile, on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
