@@ -2,57 +2,45 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Mission, Question, Choice, PlayerAnswer
-from django.http import JsonResponse
 
 @login_required
 def dashboard(request):
-    """Display available missions and user progress."""
     player_profile = request.user.playerprofile
     missions = Mission.objects.filter(is_active=True).order_by('order')
-    
-    context = {
+    return render(request, 'game/dashboard.html', {
         'player_profile': player_profile,
         'missions': missions,
-    }
-    return render(request, 'game/dashboard.html', context)
+    })
 
 @login_required
 def mission_detail(request, mission_id):
-    """Display mission details and questions."""
     mission = get_object_or_404(Mission, pk=mission_id)
     player_profile = request.user.playerprofile
     
-    # Check if user can access this mission
     if not player_profile.can_access_mission(mission):
-        messages.error(request, 'You need to complete previous missions first!')
+        messages.error(request, 'Complete previous missions first!')
         return redirect('game:dashboard')
     
-    # Get questions for this mission
     questions = mission.questions.all().order_by('order')
-    
-    context = {
+    return render(request, 'game/mission_detail.html', {
         'mission': mission,
         'questions': questions,
         'player_profile': player_profile,
-    }
-    return render(request, 'game/mission_detail.html', context)
+    })
 
 @login_required
 def submit_answer(request, mission_id):
-    """Handle mission question submissions."""
     if request.method != 'POST':
         return redirect('game:mission_detail', mission_id=mission_id)
-        
+    
     mission = get_object_or_404(Mission, pk=mission_id)
     player_profile = request.user.playerprofile
     
-    # Verify user can access this mission
     if not player_profile.can_access_mission(mission):
-        messages.error(request, 'You need to complete previous missions first!')
+        messages.error(request, 'Complete previous missions first!')
         return redirect('game:dashboard')
     
-    # Process answers
-    questions = mission.question_set.all()
+    questions = mission.questions.all()
     score = 0
     total_questions = questions.count()
     
@@ -65,26 +53,27 @@ def submit_answer(request, mission_id):
         choice = get_object_or_404(Choice, id=choice_id)
         
         # Record the answer
-        PlayerAnswer.objects.create(
+        PlayerAnswer.objects.update_or_create(
             player=player_profile,
             question=question,
-            selected_choice=choice,
-            is_correct=choice.is_correct
+            defaults={
+                'selected_choice': choice,
+                'is_correct': choice.is_correct
+            }
         )
         
         if choice.is_correct:
-            score += 10  # 10 points per correct answer
+            score += 10
     
     # Update player's score
     player_profile.total_score += score
     
-    # If all questions are answered correctly, mark mission as completed
+    # If perfect score, mark mission as completed
     if score == total_questions * 10:
         player_profile.completed_missions.add(mission)
-        messages.success(request, f'Congratulations! You completed the mission with a perfect score!')
+        messages.success(request, f'Congratulations! Mission completed with perfect score!')
     else:
-        messages.info(request, f'You scored {score} points out of {total_questions * 10}. Try again to get a perfect score!')
+        messages.info(request, f'You scored {score} points. Try again for a perfect score!')
     
     player_profile.save()
-    
     return redirect('game:dashboard')

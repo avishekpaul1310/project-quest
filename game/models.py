@@ -11,11 +11,11 @@ class Mission(models.Model):
     best_practices = models.TextField()
     is_active = models.BooleanField(default=True)
 
-    def __str__(self):
-        return f"Mission {self.order}: {self.title}"
-
     class Meta:
         ordering = ['order']
+
+    def __str__(self):
+        return f"Mission {self.order}: {self.title}"
 
 class Question(models.Model):
     mission = models.ForeignKey(Mission, on_delete=models.CASCADE, related_name='questions')
@@ -24,8 +24,8 @@ class Question(models.Model):
     explanation = models.TextField()
 
     class Meta:
-        unique_together = ['mission', 'order']
         ordering = ['order']
+        unique_together = ['mission', 'order']
 
     def __str__(self):
         return f"Question {self.order} for {self.mission.title}"
@@ -36,16 +36,16 @@ class Choice(models.Model):
     is_correct = models.BooleanField()
 
     def __str__(self):
-        return f"Choice for {self.question.text}: {self.text}"
+        return f"Choice for {self.question}: {self.text[:50]}"
 
 class PlayerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     completed_missions = models.ManyToManyField(Mission, blank=True, related_name='completed_by')
     total_score = models.IntegerField(default=0)
     current_mission = models.ForeignKey(
-        Mission, 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        Mission,
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
         related_name='current_players'
     )
