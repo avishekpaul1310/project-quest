@@ -9,12 +9,13 @@ def create_player_profile(sender, instance, created, **kwargs):
     if created:
         # Check if a profile already exists
         if not PlayerProfile.objects.filter(user=instance).exists():
-            profile = PlayerProfile.objects.create(user=instance)
-            # Set the initial mission
+            # Get first mission before creating profile
             first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
-            if first_mission:
-                profile.current_mission = first_mission
-                profile.save()
+            # Create profile with first mission
+            PlayerProfile.objects.create(
+                user=instance,
+                current_mission=first_mission
+            )
 
 @receiver(post_save, sender=User)
 def save_player_profile(sender, instance, **kwargs):

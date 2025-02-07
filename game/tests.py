@@ -84,3 +84,162 @@ class ModelTests(TestCase):
                 order=1,
                 explanation='This should fail'
             )
+
+class PlayerProgressTests(TestCase):
+    def setUp(self):
+        """Set up test data"""
+        # Create test mission
+        self.mission = Mission.objects.create(
+            title='Test Mission',
+            order=1,
+            key_concepts='Test concepts',
+            best_practices='Test practices',
+            is_active=True
+        )
+        
+        # Create test user with unique name
+        self.user = User.objects.create_user(
+            username=f'testplayer_{self._testMethodName}',
+            password='testpass123'
+        )
+        
+        # Get the automatically created profile
+        self.profile = PlayerProfile.objects.get(user=self.user)
+        
+        # Create test question
+        self.question = Question.objects.create(
+            mission=self.mission,
+            text='Test question',
+            order=1,
+            explanation='Test explanation'
+        )
+        
+        # Create choices
+        self.correct_choice = Choice.objects.create(
+            question=self.question,
+            text='Correct answer',
+            is_correct=True
+        )
+        self.wrong_choice = Choice.objects.create(
+            question=self.question,
+            text='Wrong answer',
+            is_correct=False
+        )
+
+    def test_answer_recording(self):
+        """Test that player answers are recorded correctly"""
+        # Record correct answer
+        answer = PlayerAnswer.objects.create(
+            player=self.profile,
+            question=self.question,
+            selected_choice=self.correct_choice
+        )
+        self.assertTrue(answer.is_correct)
+        
+        # Record wrong answer
+        answer = PlayerAnswer.objects.create(
+            player=self.profile,
+            question=self.question,
+            selected_choice=self.wrong_choice
+        )
+        self.assertFalse(answer.is_correct)
+
+    def test_mission_completion(self):
+        """Test mission completion logic"""
+        # Initially mission should not be completed
+        self.assertFalse(self.profile.completed_missions.filter(id=self.mission.id).exists())
+        
+        # Complete mission
+        self.profile.completed_missions.add(self.mission)
+        self.assertTrue(self.profile.completed_missions.filter(id=self.mission.id).exists())
+
+class ViewTests(TestCase):
+    def setUp(self):
+        """Set up test data"""
+        # Create test missions
+        self.mission1 = Mission.objects.create(
+            title='Project Charter Basics',
+            order=1,
+            key_concepts='Test concepts',
+            best_practices='Test practices',
+            is_active=True
+        )
+        
+        self.mission2 = Mission.objects.create(
+            title='Stakeholder Management',
+            order=2,
+            key_concepts='Test concepts 2',
+            best_practices='Test practices 2',
+            is_active=True
+        )
+        
+        # Create test user
+        self.user = User.objects.create_user(
+            username=f'testuser_{self._testMethodName}',
+            password='testpass123'
+        )
+        
+        # Create test client
+        self.client = Client()
+
+    def test_login_required(self):
+        """Test that views require login"""
+        # Try accessing dashboard without login
+        response = self.client.get(reverse('game:dashboard'))
+        self.assertEqual(response.status_code, 302)  # Should redirect to login
+        
+        # Try accessing mission detail without login
+        response = self.client.get(reverse('game:mission_detail', args=[self.mission1.id]))
+        self.assertEqual(response.status_code, 302)  # Should redirect to login
+
+    def test_dashboard_view(self):
+        """Test dashboard view content"""
+        self.client.login(username=self.user.username, password='testpass123')
+        response = self.client.get(reverse('game:dashboard'))
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'game/dashboard.html')
+        self.assertContains(response, 'Project Charter Basics')
+        self.assertContains(response, 'Stakeholder Management')
+
+    def test_mission_detail_view(self):
+        """Test mission detail view"""
+        self.client.login(username=self.user.username, password='testpass123')
+        
+        # Create a question for testing
+        question = Question.objects.create(
+            mission=self.mission1,
+            text='Test question',
+            order=1,
+            explanation='Test explanation'
+        )
+        
+        response = self.client.get(reverse('game:mission_detail', args=[self.mission1.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'game/mission_detail.html')
+        self.assertContains(response, 'Test question')
+
+    def test_submit_answer(self):
+        """Test answer submission functionality"""
+        self.client.login(username=self.user.username, password='testpass123')
+        
+        # Create question and choices
+        question = Question.objects.create(
+            mission=self.mission1,
+            text='Test question',
+            order=1,
+            explanation='Test explanation'
+        )
+        correct_choice = Choice.objects.create(
+            question=question,
+            text='Correct answer',
+            is_correct=True
+        )
+        
+        # Submit correct answer
+        response = self.client.post(
+            reverse('game:submit_answer', args=[self.mission1.id]),
+            {f'question_{question.id}': correct_choice.id}
+        )
+        
+        self.assertEqual(response.status_code, 302)  # Should redirect to dashboard            
