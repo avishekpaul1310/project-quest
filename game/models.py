@@ -57,7 +57,30 @@ class PlayerProfile(models.Model):
             first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
             self.current_mission = first_mission
         super().save(*args, **kwargs)
+    
+    def can_access_mission(self, mission):
+        """
+        Determine if the user can access a given mission.
+        Rules:
+        1. Mission 1 is always accessible
+        2. Other missions are accessible only if the previous mission is completed
+        """
+        # First mission is always accessible
+        if mission.order == 1:
+            return True
+            
+        # Find the previous mission
+        prev_mission = Mission.objects.filter(
+            is_active=True,
+            order=mission.order - 1
+        ).first()
         
+        # If there's no previous mission (shouldn't happen) or if it's completed
+        if not prev_mission:
+            return False
+            
+        return self.completed_missions.filter(id=prev_mission.id).exists()
+
 class PlayerAnswer(models.Model):
     player = models.ForeignKey(PlayerProfile, on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
