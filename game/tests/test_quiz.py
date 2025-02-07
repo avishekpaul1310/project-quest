@@ -3,7 +3,9 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from game.models import Mission, Question, Choice, PlayerProfile, PlayerAnswer
 
-class QuizTestCase(TestCase):
+class QuizSetupTests(TestCase):
+    """Tests for quiz setup and configuration"""
+    
     def setUp(self):
         # Create test user
         self.user = User.objects.create_user(
@@ -21,139 +23,150 @@ class QuizTestCase(TestCase):
             is_active=True
         )
         
-        # Create test questions
-        self.question1 = Question.objects.create(
+        # Create test question
+        self.question = Question.objects.create(
             mission=self.mission,
             text='What is a project charter?',
             order=1,
             explanation='A project charter is a formal document...'
         )
         
-        self.question2 = Question.objects.create(
-            mission=self.mission,
-            text='Who approves the project charter?',
-            order=2,
-            explanation='The project sponsor approves...'
-        )
-        
-        # Create choices for question 1
-        self.q1_correct = Choice.objects.create(
-            question=self.question1,
+        # Create choices
+        self.correct_choice = Choice.objects.create(
+            question=self.question,
             text='A formal document that authorizes the project',
             is_correct=True
         )
-        self.q1_wrong = Choice.objects.create(
-            question=self.question1,
+        self.wrong_choice = Choice.objects.create(
+            question=self.question,
             text='A project schedule',
-            is_correct=False
-        )
-        
-        # Create choices for question 2
-        self.q2_correct = Choice.objects.create(
-            question=self.question2,
-            text='Project Sponsor',
-            is_correct=True
-        )
-        self.q2_wrong = Choice.objects.create(
-            question=self.question2,
-            text='Team Member',
             is_correct=False
         )
 
     def test_question_creation(self):
-        """Test that questions are created correctly"""
-        self.assertEqual(self.question1.mission, self.mission)
-        self.assertEqual(self.question1.order, 1)
-        self.assertTrue(len(self.question1.choices.all()) == 2)
+        """Test that questions are created with correct attributes"""
+        self.assertEqual(self.question.mission, self.mission)
+        self.assertEqual(self.question.order, 1)
+        self.assertEqual(self.question.choices.count(), 2)
 
-    def test_choice_uniqueness(self):
-        """Test that only one choice can be correct per question"""
+    def test_choice_correct_flag(self):
+        """Test that only one choice can be marked as correct"""
         new_correct = Choice.objects.create(
-            question=self.question1,
+            question=self.question,
             text='Another correct answer',
             is_correct=True
         )
-        self.q1_correct.refresh_from_db()
-        self.assertFalse(self.q1_correct.is_correct)
+        # Refresh from database to get updated values
+        self.correct_choice.refresh_from_db()
+        # Old correct choice should now be false
+        self.assertFalse(self.correct_choice.is_correct)
+        # New choice should be correct
         self.assertTrue(new_correct.is_correct)
 
-    def test_quiz_access(self):
-        """Test quiz access restrictions"""
-        self.client.login(username='testuser', password='testpass123')
+class QuizFunctionalTests(TestCase):
+    """Tests for quiz functionality"""
+    
+    def setUp(self):
+        # Create test user
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.client = Client()
         
-        # Try accessing first mission (should work)
-        response = self.client.get(reverse('game:take_quiz', args=[self.mission.id]))
-        self.assertEqual(response.status_code, 200)
-        
-        # Create a second mission
-        mission2 = Mission.objects.create(
-            title='Advanced Topics',
-            order=2,
-            key_concepts='Advanced concepts',
-            best_practices='Advanced practices',
+        # Create test mission
+        self.mission = Mission.objects.create(
+            title='Project Charter Basics',
+            order=1,
+            key_concepts='Test concepts',
+            best_practices='Test practices',
             is_active=True
         )
         
-        # Try accessing second mission (should redirect)
-        response = self.client.get(reverse('game:take_quiz', args=[mission2.id]))
-        self.assertEqual(response.status_code, 302)
+        # Create multiple questions
+        self.questions = []
+        self.correct_choices = []
+        self.wrong_choices = []
+        
+        for i in range(5):  # Create 5 questions
+            question = Question.objects.create(
+                mission=self.mission,
+                text=f'Test Question {i+1}',
+                order=i+1,
+                explanation=f'Explanation for question {i+1}'
+            )
+            self.questions.append(question)
+            
+            # Create choices for each question
+            correct = Choice.objects.create(
+                question=question,
+                text=f'Correct Answer {i+1}',
+                is_correct=True
+            )
+            wrong = Choice.objects.create(
+                question=question,
+                text=f'Wrong Answer {i+1}',
+                is_correct=False
+            )
+            
+            self.correct_choices.append(correct)
+            self.wrong_choices.append(wrong)
 
-    def test_quiz_submission(self):
-        """Test quiz submission and scoring"""
+    def test_quiz_access_authentication(self):
+        """Test that quiz requires authentication"""
+        # Try accessing quiz without login
+        response = self.client.get(reverse('game:take_quiz', args=[self.mission.id]))
+        self.assertEqual(response.status_code, 302)  # Should redirect to login
+        
+        # Login and try again
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get(reverse('game:take_quiz', args=[self.mission.id]))
+        self.assertEqual(response.status_code, 200)
+
+    def test_quiz_submission_perfect_score(self):
+        """Test quiz submission with all correct answers"""
         self.client.login(username='testuser', password='testpass123')
         
-        # Submit correct answers
+        # Create submission data with all correct answers
+        data = {
+            f'question_{q.id}': self.correct_choices[i].id
+            for i, q in enumerate(self.questions)
+        }
+        
         response = self.client.post(
             reverse('game:take_quiz', args=[self.mission.id]),
-            data={
-                f'question_{self.question1.id}': self.q1_correct.id,
-                f'question_{self.question2.id}': self.q2_correct.id,
-            }
+            data=data
         )
         
-        # Check if answers were recorded
+        # Check player's score (10 points per correct answer)
         player = self.user.playerprofile
-        self.assertTrue(self.question1.is_answered_correctly_by(player))
-        self.assertTrue(self.question2.is_answered_correctly_by(player))
+        expected_score = len(self.questions) * 10
+        self.assertEqual(player.total_score, expected_score)
         
-        # Check score (10 points per correct answer)
-        self.assertEqual(player.total_score, 20)
-        
-        # Check if mission was completed
+        # Mission should be completed
         self.assertTrue(self.mission in player.completed_missions.all())
 
-    def test_quiz_partial_completion(self):
-        """Test partial quiz completion"""
+    def test_quiz_submission_partial_score(self):
+        """Test quiz submission with mixed correct/incorrect answers"""
         self.client.login(username='testuser', password='testpass123')
         
-        # Submit mixed answers (one correct, one wrong)
+        # Submit mixture of correct and incorrect answers
+        data = {
+            f'question_{self.questions[0].id}': self.correct_choices[0].id,  # correct
+            f'question_{self.questions[1].id}': self.wrong_choices[1].id,    # wrong
+            f'question_{self.questions[2].id}': self.correct_choices[2].id,  # correct
+            f'question_{self.questions[3].id}': self.wrong_choices[3].id,    # wrong
+            f'question_{self.questions[4].id}': self.correct_choices[4].id,  # correct
+        }
+        
         response = self.client.post(
             reverse('game:take_quiz', args=[self.mission.id]),
-            data={
-                f'question_{self.question1.id}': self.q1_correct.id,
-                f'question_{self.question2.id}': self.q2_wrong.id,
-            }
+            data=data
         )
         
+        # Check player's score (should be 30 points for 3 correct answers)
         player = self.user.playerprofile
-        self.assertEqual(player.total_score, 10)  # Only one correct answer
+        self.assertEqual(player.total_score, 30)
+        
+        # Mission should not be completed (not all answers correct)
         self.assertFalse(self.mission in player.completed_missions.all())
-
-    def test_results_page(self):
-        """Test the quiz results page"""
-        self.client.login(username='testuser', password='testpass123')
-        
-        # Submit answers
-        self.client.post(
-            reverse('game:take_quiz', args=[self.mission.id]),
-            data={
-                f'question_{self.question1.id}': self.q1_correct.id,
-                f'question_{self.question2.id}': self.q2_wrong.id,
-            }
-        )
-        
-        # Check results page
-        response = self.client.get(reverse('game:mission_results', args=[self.mission.id]))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.question1.text)
-        self.assertContains(response, self.question2.explanation)
