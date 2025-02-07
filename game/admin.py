@@ -1,41 +1,43 @@
 from django.contrib import admin
 from .models import Mission, Question, Choice, PlayerProfile, PlayerAnswer
 
-@admin.register(Mission)
-class MissionAdmin(admin.ModelAdmin):
-    list_display = ('title', 'order', 'is_active')
-    list_filter = ('is_active',)
-    search_fields = ('title',)
-    ordering = ('order',)
-
 class ChoiceInline(admin.TabularInline):
     model = Choice
     extra = 4
-    max_num = 4
+
+@admin.register(Mission)
+class MissionAdmin(admin.ModelAdmin):
+    list_display = ('order', 'title', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('title',)
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     list_display = ('mission', 'order', 'text')
     list_filter = ('mission',)
+    search_fields = ('text',)
     inlines = [ChoiceInline]
-    ordering = ('mission', 'order')
-
-@admin.register(Choice)
-class ChoiceAdmin(admin.ModelAdmin):
-    list_display = ('question', 'text', 'is_correct')
-    list_filter = ('question__mission', 'is_correct')
-    search_fields = ('text',)    
 
 @admin.register(PlayerProfile)
 class PlayerProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'total_score', 'current_mission')
-    list_filter = ('current_mission',)
+    list_filter = ('completed_missions',)
     search_fields = ('user__username',)
-    readonly_fields = ('total_score',)
 
 @admin.register(PlayerAnswer)
 class PlayerAnswerAdmin(admin.ModelAdmin):
-    list_display = ('player', 'question', 'selected_choice', 'is_correct')
-    list_filter = ('is_correct', 'question__mission')
+    list_display = ('player', 'question', 'get_is_correct', 'created_at', 'updated_at')
+    list_filter = ('question__mission', 'created_at')  # Remove is_correct from list_filter
     search_fields = ('player__user__username',)
-    readonly_fields = ('is_correct',)
+
+    def get_is_correct(self, obj):
+        """Return whether the answer is correct"""
+        return obj.is_correct
+    get_is_correct.short_description = 'Correct?'
+    get_is_correct.boolean = True
+
+@admin.register(Choice)
+class ChoiceAdmin(admin.ModelAdmin):
+    list_display = ('question', 'text', 'is_correct')
+    list_filter = ('is_correct', 'question__mission')
+    search_fields = ('text',)
