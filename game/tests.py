@@ -128,21 +128,25 @@ class PlayerProgressTests(TestCase):
 
     def test_answer_recording(self):
         """Test that player answers are recorded correctly"""
-        # Record correct answer
-        answer, created = PlayerAnswer.objects.update_or_create(
+        # First attempt with correct answer
+        answer, _ = PlayerAnswer.objects.update_or_create(
             player=self.profile,
             question=self.question,
             defaults={'selected_choice': self.correct_choice}
         )
         self.assertTrue(answer.is_correct)
         
-        # Record wrong answer (updating the previous answer)
-        answer, created = PlayerAnswer.objects.update_or_create(
-            player=self.profile,
-            question=self.question,
-            defaults={'selected_choice': self.wrong_choice}
-        )
+        # Change to wrong answer
+        answer.selected_choice = self.wrong_choice
+        answer.save()
         self.assertFalse(answer.is_correct)
+        
+        # Verify only one answer exists
+        answer_count = PlayerAnswer.objects.filter(
+            player=self.profile,
+            question=self.question
+        ).count()
+        self.assertEqual(answer_count, 1)
 
     def test_mission_completion(self):
         """Test mission completion logic"""

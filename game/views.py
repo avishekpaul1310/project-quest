@@ -22,6 +22,7 @@ def mission_detail(request, mission_id):
         return redirect('game:dashboard')
     
     questions = mission.questions.all().order_by('order')
+    
     return render(request, 'game/mission_detail.html', {
         'mission': mission,
         'questions': questions,

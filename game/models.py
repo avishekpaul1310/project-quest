@@ -66,8 +66,9 @@ class PlayerAnswer(models.Model):
     player = models.ForeignKey(PlayerProfile, on_delete=models.CASCADE, related_name='answers')
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     selected_choice = models.ForeignKey(Choice, on_delete=models.CASCADE)
-    is_correct = models.BooleanField()
-    created_at = models.DateTimeField(default=timezone.now)
+    is_correct = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ['player', 'question']
