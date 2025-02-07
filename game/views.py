@@ -97,29 +97,38 @@ def take_quiz(request, mission_id):
     if request.method == 'POST':
         score = 0
         total_questions = questions.count()
+        answers_correct = True  # Track if all answers are correct
         
+        # Process each question's answer
         for question in questions:
             choice_id = request.POST.get(f'question_{question.id}')
             if choice_id:
-                choice = Choice.objects.get(id=choice_id)
-                # Create or update player's answer
-                PlayerAnswer.objects.update_or_create(
-                    player=player,
-                    question=question,
-                    defaults={'selected_choice': choice}
-                )
-                if choice.is_correct:
-                    score += 10  # 10 points per correct answer
+                try:
+                    choice = Choice.objects.get(id=choice_id)
+                    # Create or update player's answer
+                    answer, _ = PlayerAnswer.objects.update_or_create(
+                        player=player,
+                        question=question,
+                        defaults={'selected_choice': choice}
+                    )
+                    if choice.is_correct:
+                        score += 10  # 10 points per correct answer
+                    else:
+                        answers_correct = False
+                except Choice.DoesNotExist:
+                    answers_correct = False
+            else:
+                answers_correct = False
 
-        # Update player's score
-        player.total_score += score
-        if score == total_questions * 10:  # All answers correct
-            player.completed_missions.add(mission)
-            messages.success(request, f'Congratulations! You completed the mission with {score} points!')
-        else:
-            messages.info(request, f'You scored {score} points. Try again to complete the mission!')
+        # Update player's score and completion status
+        if score > 0:  # Only update score if points were earned
+            player.add_score(score)
+            if answers_correct:  # Only complete mission if all answers correct
+                player.completed_missions.add(mission)
+                messages.success(request, f'Congratulations! You completed the mission with {score} points!')
+            else:
+                messages.info(request, f'You scored {score} points. Try again to complete the mission!')
         
-        player.save()
         return redirect('game:mission_results', mission_id=mission_id)
 
     return render(request, 'game/take_quiz.html', {

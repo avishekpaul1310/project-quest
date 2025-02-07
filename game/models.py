@@ -68,15 +68,13 @@ class PlayerProfile(models.Model):
     def __str__(self):
         return f"{self.user.username}'s Profile"
 
-    def save(self, *args, **kwargs):
-        if not self.pk or not self.current_mission:
-            # Only set current_mission if this is a new profile or current_mission is None
-            first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
-            if first_mission:
-                self.current_mission = first_mission
-        super().save(*args, **kwargs)
+    def add_score(self, points):
+        """Add points to total score"""
+        self.total_score += points
+        self.save(update_fields=['total_score'])
 
     def can_access_mission(self, mission):
+        """Check if player can access a mission"""
         if mission.order == 1:
             return True
         prev_mission = Mission.objects.filter(
@@ -84,30 +82,39 @@ class PlayerProfile(models.Model):
             order=mission.order - 1
         ).first()
         return prev_mission and self.completed_missions.filter(id=prev_mission.id).exists()
-    
+        
 class PlayerAnswer(models.Model):
     player = models.ForeignKey(PlayerProfile, on_delete=models.CASCADE, related_name='answers')
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     selected_choice = models.ForeignKey(Choice, on_delete=models.CASCADE)
-    is_correct = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ['player', 'question']
 
+    def __str__(self):
+        return f"{self.player.user.username}'s answer to {self.question}"
+
+    @property
+    def is_correct(self):
+        """Check if the selected answer is correct"""
+        return self.selected_choice.is_correct
+
     def save(self, *args, **kwargs):
-        self.is_correct = self.selected_choice.is_correct
+        # If this is an update and the choice changed, update player's score
+        if self.pk:
+            old_answer = PlayerAnswer.objects.get(pk=self.pk)
+            if old_answer.selected_choice != self.selected_choice:
+                # Remove points for old answer if it was correct
+                if old_answer.selected_choice.is_correct:
+                    self.player.add_score(-10)
+                # Add points for new answer if it's correct
+                if self.selected_choice.is_correct:
+                    self.player.add_score(10)
+        else:
+            # New answer - add points if correct
+            if self.selected_choice.is_correct:
+                self.player.add_score(10)
+        
         super().save(*args, **kwargs)
-
-@receiver(post_save, sender=User)
-def create_player_profile(sender, instance, created, **kwargs):
-    """Create PlayerProfile for new users only if one doesn't exist"""
-    if created and not hasattr(instance, 'playerprofile'):
-        PlayerProfile.objects.create(user=instance)
-
-@receiver(post_save, sender=User)
-def save_player_profile(sender, instance, **kwargs):
-    """Save PlayerProfile if it exists"""
-    if hasattr(instance, 'playerprofile'):
-        instance.playerprofile.save()
