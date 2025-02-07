@@ -71,8 +71,10 @@ class PlayerAnswer(models.Model):
 def create_player_profile(sender, instance, created, **kwargs):
     """Create PlayerProfile when a new User is created"""
     if created:
-        profile = PlayerProfile.objects.create(user=instance)
+        # Get the first mission before creating the profile
         first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
-        if first_mission:
-            profile.current_mission = first_mission
-            profile.save()
+        # Create the profile with the first mission
+        PlayerProfile.objects.create(
+            user=instance,
+            current_mission=first_mission
+        )

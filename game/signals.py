@@ -8,10 +8,10 @@ def create_player_profile(sender, instance, created, **kwargs):
     if created:  # Only try to create a profile if this is a new user
         # Get the first mission (ordered by 'order' field)
         first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
-        # Use get_or_create instead of create to avoid duplicate profiles
-        PlayerProfile.objects.get_or_create(
+        PlayerProfile.objects.create(
             user=instance,
-            defaults={'current_mission': first_mission}
+            current_mission=first_mission,
+            total_score=0
         )
 
 @receiver(post_save, sender=User)
