@@ -7,10 +7,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 class ModelTests(TestCase):
-    def setUp(self):
-        """Set up test data"""
-        # Create test missions
-        self.mission1 = Mission.objects.create(
+    @classmethod
+    def setUpTestData(cls):
+        """Set up non-modified data for all class methods"""
+        # Create test missions first
+        cls.mission1 = Mission.objects.create(
             title='Project Charter Basics',
             order=1,
             key_concepts='Test concepts',
@@ -18,22 +19,23 @@ class ModelTests(TestCase):
             is_active=True
         )
         
-        self.mission2 = Mission.objects.create(
+        cls.mission2 = Mission.objects.create(
             title='Stakeholder Management',
             order=2,
             key_concepts='Test concepts 2',
             best_practices='Test practices 2',
             is_active=True
         )
-        
-        # Create test user
+
+    def setUp(self):
+        """Set up data for each test method"""
+        # Create a new user for each test
         self.user = User.objects.create_user(
-            username='testuser',
+            username=f'testuser_{self._testMethodName}',  # Make username unique for each test
             password='testpass123'
         )
-        
-        # Get the automatically created profile
-        self.profile = self.user.playerprofile
+        # Profile is created automatically via signal
+        self.profile = PlayerProfile.objects.get(user=self.user)
 
     def test_mission_access(self):
         """Test mission access logic"""
@@ -82,76 +84,3 @@ class ModelTests(TestCase):
                 order=1,
                 explanation='This should fail'
             )
-
-class PlayerProgressTests(TestCase):
-    def setUp(self):
-        """Set up test data"""
-        # Create test mission
-        self.mission = Mission.objects.create(
-            title='Test Mission',
-            order=1,
-            key_concepts='Test concepts',
-            best_practices='Test practices',
-            is_active=True
-        )
-        
-        # Create test user
-        self.user = User.objects.create_user(
-            username='testplayer',
-            password='testpass123'
-        )
-        
-        # Get the automatically created profile
-        self.profile = self.user.playerprofile
-        
-        # Create test question
-        self.question = Question.objects.create(
-            mission=self.mission,
-            text='Test question',
-            order=1,
-            explanation='Test explanation'
-        )
-        
-        # Create choices
-        self.correct_choice = Choice.objects.create(
-            question=self.question,
-            text='Correct answer',
-            is_correct=True
-        )
-        self.wrong_choice = Choice.objects.create(
-            question=self.question,
-            text='Wrong answer',
-            is_correct=False
-        )
-
-class ViewTests(TestCase):
-    def setUp(self):
-        """Set up test data"""
-        # Create test missions
-        self.mission1 = Mission.objects.create(
-            title='Project Charter Basics',
-            order=1,
-            key_concepts='Test concepts',
-            best_practices='Test practices',
-            is_active=True
-        )
-        
-        self.mission2 = Mission.objects.create(
-            title='Stakeholder Management',
-            order=2,
-            key_concepts='Test concepts 2',
-            best_practices='Test practices 2',
-            is_active=True
-        )
-        
-        # Create test user
-        self.user = User.objects.create_user(
-            username='testuser',
-            password='testpass123'
-        )
-        
-        # Get the automatically created profile
-        self.profile = self.user.playerprofile
-        
-        # Create the test client
-        self.client = Client()

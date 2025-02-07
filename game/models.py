@@ -53,13 +53,6 @@ class PlayerProfile(models.Model):
     def __str__(self):
         return f"{self.user.username}'s Profile"
 
-    def save(self, *args, **kwargs):
-        if not self.pk and not self.current_mission:
-            first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
-            if first_mission:
-                self.current_mission = first_mission
-        super().save(*args, **kwargs)
-
     def can_access_mission(self, mission):
         if mission.order == 1:
             return True
@@ -68,7 +61,7 @@ class PlayerProfile(models.Model):
             order=mission.order - 1
         ).first()
         return prev_mission and self.completed_missions.filter(id=prev_mission.id).exists()
-
+    
 class PlayerAnswer(models.Model):
     player = models.ForeignKey(PlayerProfile, on_delete=models.CASCADE, related_name='answers')
     question = models.ForeignKey(Question, on_delete=models.CASCADE)

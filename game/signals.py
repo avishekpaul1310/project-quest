@@ -2,23 +2,22 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from .models import PlayerProfile, Mission
-import logging
-
-logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=User)
 def create_player_profile(sender, instance, created, **kwargs):
-    """Create PlayerProfile when a new User is created"""
+    """Create PlayerProfile for new users only if one doesn't exist"""
     if created:
-        # Get the first mission before creating the profile
-        first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
-        logger.debug(f"Found first mission: {first_mission}")
-        
-        # Create the profile
-        profile = PlayerProfile.objects.create(user=instance)
-        logger.debug(f"Created profile for user: {instance.username}")
-        
-        # Set the current mission
-        profile.current_mission = first_mission
-        profile.save()
-        logger.debug(f"Updated profile with current_mission: {first_mission}")
+        # Check if a profile already exists
+        if not PlayerProfile.objects.filter(user=instance).exists():
+            profile = PlayerProfile.objects.create(user=instance)
+            # Set the initial mission
+            first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
+            if first_mission:
+                profile.current_mission = first_mission
+                profile.save()
+
+@receiver(post_save, sender=User)
+def save_player_profile(sender, instance, **kwargs):
+    """Save PlayerProfile if it exists"""
+    if hasattr(instance, 'playerprofile'):
+        instance.playerprofile.save()
