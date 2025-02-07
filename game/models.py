@@ -85,9 +85,12 @@ class PlayerAnswer(models.Model):
 
 @receiver(post_save, sender=User)
 def create_player_profile(sender, instance, created, **kwargs):
-    if created:
+    """Create PlayerProfile for new users only if one doesn't exist"""
+    if created and not hasattr(instance, 'playerprofile'):
         PlayerProfile.objects.create(user=instance)
 
 @receiver(post_save, sender=User)
 def save_player_profile(sender, instance, **kwargs):
-    instance.playerprofile.save()
+    """Save PlayerProfile if it exists"""
+    if hasattr(instance, 'playerprofile'):
+        instance.playerprofile.save()
