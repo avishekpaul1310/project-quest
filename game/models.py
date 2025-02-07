@@ -19,25 +19,40 @@ class Mission(models.Model):
 
 class Question(models.Model):
     mission = models.ForeignKey(Mission, on_delete=models.CASCADE, related_name='questions')
-    text = models.TextField()
-    order = models.IntegerField()
-    explanation = models.TextField()
-
+    text = models.TextField(help_text="The question text")
+    order = models.IntegerField(help_text="Order of question within the mission")
+    explanation = models.TextField(help_text="Explanation shown after answering")
+    
     class Meta:
-        ordering = ['order']
         unique_together = ['mission', 'order']
+        ordering = ['order']
 
     def __str__(self):
-        return f"Question {self.order} for {self.mission.title}"
+        return f"Mission {self.mission.order}, Q{self.order}: {self.text[:50]}..."
+
+    def is_answered_correctly_by(self, player):
+        """Check if the player answered this question correctly"""
+        try:
+            answer = PlayerAnswer.objects.get(player=player, question=self)
+            return answer.selected_choice.is_correct
+        except PlayerAnswer.DoesNotExist:
+            return False
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
-    text = models.TextField()
-    is_correct = models.BooleanField()
+    text = models.TextField(help_text="The choice text")
+    is_correct = models.BooleanField(default=False, help_text="Whether this is the correct answer")
+    explanation = models.TextField(help_text="Explanation why this choice is correct/incorrect", blank=True)
 
     def __str__(self):
-        return f"Choice for {self.question}: {self.text[:50]}"
+        return f"{self.text[:50]}... ({'✓' if self.is_correct else '✗'})"
 
+    def save(self, *args, **kwargs):
+        if self.is_correct:
+            # Ensure only one correct answer per question
+            self.question.choices.exclude(id=self.id).update(is_correct=False)
+        super().save(*args, **kwargs)
+        
 class PlayerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     completed_missions = models.ManyToManyField(Mission, blank=True, related_name='completed_by')
