@@ -102,19 +102,12 @@ class PlayerAnswer(models.Model):
         return self.selected_choice.is_correct
 
     def save(self, *args, **kwargs):
-        # If this is an update and the choice changed, update player's score
-        if self.pk:
+        if self.pk:  # If this is an update
             old_answer = PlayerAnswer.objects.get(pk=self.pk)
-            if old_answer.selected_choice != self.selected_choice:
-                # Remove points for old answer if it was correct
-                if old_answer.selected_choice.is_correct:
-                    self.player.add_score(-10)
-                # Add points for new answer if it's correct
-                if self.selected_choice.is_correct:
-                    self.player.add_score(10)
-        else:
-            # New answer - add points if correct
-            if self.selected_choice.is_correct:
-                self.player.add_score(10)
-        
+            # Remove points for old answer if it was correct
+            if old_answer.selected_choice.is_correct:
+                self.player.add_score(-10)
+        # Add points for new correct answer
+        if self.selected_choice.is_correct:
+            self.player.add_score(10)
         super().save(*args, **kwargs)

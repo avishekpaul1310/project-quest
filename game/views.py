@@ -96,8 +96,7 @@ def take_quiz(request, mission_id):
     questions = mission.questions.all().order_by('order')
 
     if request.method == 'POST':
-        with transaction.atomic():  # Use transaction to ensure data consistency
-            score = 0
+        with transaction.atomic():
             total_questions = questions.count()
             answers_correct = True
             
@@ -113,30 +112,27 @@ def take_quiz(request, mission_id):
                 if choice_id:
                     try:
                         choice = Choice.objects.get(id=choice_id)
-                        # Create new answer
-                        PlayerAnswer.objects.create(
+                        # Create new answer - score update happens in PlayerAnswer.save()
+                        answer = PlayerAnswer.objects.create(
                             player=player,
                             question=question,
                             selected_choice=choice
                         )
-                        if choice.is_correct:
-                            score += 10
-                        else:
+                        if not choice.is_correct:
                             answers_correct = False
                     except Choice.DoesNotExist:
                         answers_correct = False
                 else:
                     answers_correct = False
 
-            # Update player's score and completion status
-            player.total_score += score
-            player.save()
-
+            # Refresh player to get updated score
+            player.refresh_from_db()
+            
             if answers_correct:
                 player.completed_missions.add(mission)
-                messages.success(request, f'Congratulations! You completed the mission with {score} points!')
+                messages.success(request, f'Congratulations! You completed the mission with {player.total_score} points!')
             else:
-                messages.info(request, f'You scored {score} points. Try again to complete the mission!')
+                messages.info(request, f'You scored {player.total_score} points. Try again to complete the mission!')
 
             return redirect('game:mission_results', mission_id=mission_id)
 
