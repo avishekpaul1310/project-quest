@@ -5,17 +5,13 @@ from .models import PlayerProfile, Mission
 
 @receiver(post_save, sender=User)
 def create_player_profile(sender, instance, created, **kwargs):
-    if created:  # Only try to create a profile if this is a new user
-        # Get the first mission (ordered by 'order' field)
+    """Create PlayerProfile when a new User is created"""
+    if created:
+        # Get the first mission before creating the profile
         first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
+        # Create the profile with the first mission
         PlayerProfile.objects.create(
             user=instance,
             current_mission=first_mission,
             total_score=0
         )
-
-@receiver(post_save, sender=User)
-def save_player_profile(sender, instance, **kwargs):
-    # Only save if the profile exists
-    if hasattr(instance, 'playerprofile'):
-        instance.playerprofile.save()

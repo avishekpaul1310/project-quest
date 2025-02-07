@@ -1,7 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 
 class Mission(models.Model):
     title = models.CharField(max_length=200)
@@ -66,15 +64,3 @@ class PlayerAnswer(models.Model):
     
     class Meta:
         unique_together = ['player', 'question']
-
-@receiver(post_save, sender=User)
-def create_player_profile(sender, instance, created, **kwargs):
-    """Create PlayerProfile when a new User is created"""
-    if created:
-        # Get the first mission before creating the profile
-        first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
-        # Create the profile with the first mission
-        PlayerProfile.objects.create(
-            user=instance,
-            current_mission=first_mission
-        )
