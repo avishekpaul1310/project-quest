@@ -53,6 +53,14 @@ class PlayerProfile(models.Model):
     def __str__(self):
         return f"{self.user.username}'s Profile"
 
+    def save(self, *args, **kwargs):
+        if not self.pk or not self.current_mission:
+            # Only set current_mission if this is a new profile or current_mission is None
+            first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
+            if first_mission:
+                self.current_mission = first_mission
+        super().save(*args, **kwargs)
+
     def can_access_mission(self, mission):
         if mission.order == 1:
             return True

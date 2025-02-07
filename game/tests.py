@@ -61,11 +61,37 @@ class ModelTests(TestCase):
         self.assertEqual(missions[0], self.mission1)
         self.assertEqual(missions[1], self.mission2)
 
-    def test_player_profile_creation(self):
-        """Test that PlayerProfile is created automatically for new users"""
-        self.assertTrue(hasattr(self.user, 'playerprofile'))
-        self.assertEqual(self.profile.total_score, 0)
-        self.assertEqual(self.profile.current_mission, self.mission1)
+def test_player_profile_creation(self):
+    """Test that PlayerProfile is created automatically for new users"""
+    # Clear any existing missions to ensure clean state
+    Mission.objects.all().delete()
+    
+    # Create a test mission
+    mission = Mission.objects.create(
+        title='Project Charter Basics',
+        order=1,
+        key_concepts='Test concepts',
+        best_practices='Test practices',
+        is_active=True
+    )
+    
+    # Create a new user
+    user = User.objects.create_user(
+        username='profiletestuser',
+        password='testpass123'
+    )
+    
+    # Get the profile that should have been created
+    profile = PlayerProfile.objects.get(user=user)
+    
+    # Verify the profile exists and has correct initial values
+    self.assertTrue(hasattr(user, 'playerprofile'))
+    self.assertEqual(profile.total_score, 0)
+    self.assertEqual(profile.current_mission, mission)
+    
+    # Refresh from database to ensure changes are persisted
+    profile.refresh_from_db()
+    self.assertEqual(profile.current_mission, mission)
 
     def test_question_uniqueness(self):
         """Test that questions must have unique order within a mission"""

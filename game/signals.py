@@ -9,12 +9,19 @@ def create_player_profile(sender, instance, created, **kwargs):
     """Create PlayerProfile for new users only if one doesn't exist"""
     if created:
         with atomic():
-            if not PlayerProfile.objects.filter(user=instance).exists():
-                first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
-                PlayerProfile.objects.create(
-                    user=instance,
-                    current_mission=first_mission
-                )
+            # Get first mission before creating profile
+            first_mission = Mission.objects.filter(is_active=True).order_by('order').first()
+            
+            # Create profile if it doesn't exist
+            profile, created = PlayerProfile.objects.get_or_create(
+                user=instance,
+                defaults={'current_mission': first_mission}
+            )
+            
+            # Ensure current_mission is set
+            if not profile.current_mission:
+                profile.current_mission = first_mission
+                profile.save(update_fields=['current_mission'])
 
 @receiver(post_save, sender=User)
 def save_player_profile(sender, instance, **kwargs):
