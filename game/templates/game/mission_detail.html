@@ -13,23 +13,69 @@
     </div>
 
     {% if questions %}
-        <form method="post">
+        <form method="post" action="{% url 'game:submit_answer' mission.id %}">
             {% csrf_token %}
             {% for question in questions %}
                 <div class="question">
                     <h4>{{ question.text }}</h4>
-                    {% for choice in question.choices.all %}
-                        <label>
-                            <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" required>
-                            {{ choice.text }}
-                        </label>
+                    {% for choice in question.choice_set.all %}
+                        <div class="choice">
+                            <label>
+                                <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" required>
+                                {{ choice.text }}
+                            </label>
+                        </div>
                     {% endfor %}
                 </div>
             {% endfor %}
-            <button type="submit">Submit Answers</button>
+            <button type="submit" class="submit-btn">Submit Answers</button>
         </form>
     {% else %}
         <p>No questions available for this mission yet.</p>
     {% endif %}
 </div>
+
+<style>
+    .mission-detail {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .mission-content {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 30px;
+    }
+    .question {
+        margin-bottom: 30px;
+        padding: 20px;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+    }
+    .choice {
+        margin: 10px 0;
+    }
+    .choice label {
+        display: block;
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .choice label:hover {
+        background-color: #f8f9fa;
+    }
+    .submit-btn {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .submit-btn:hover {
+        background-color: #0056b3;
+    }
+</style>
 {% endblock %}
