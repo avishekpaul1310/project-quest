@@ -28,7 +28,7 @@ def mission_detail(request, mission_id):
         return redirect('game:dashboard')
     
     # Get questions for this mission
-    questions = mission.question_set.all().order_by('order')
+    questions = mission.questions.all().order_by('order')
     
     context = {
         'mission': mission,
