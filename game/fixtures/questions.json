@@ -1,3 +1,4 @@
+[
     {
       "model": "game.question",
       "pk": 1,
@@ -7,7 +8,7 @@
         "order": 1,
         "explanation": "A project charter formally authorizes the project and provides the project manager with the authority to apply organizational resources to project activities."
       }
-    }
+    },
     {
       "model": "game.choice",
       "pk": 1,
@@ -197,13 +198,7 @@
         "is_correct": false,
         "explanation": "Incorrect. A high-level budget is typically included in the charter."
       }
-    }
-  ]
-
-  [
-    // ... Previous Mission 1 questions remain the same ...
-  
-    // Mission 2: Stakeholder Engagement Questions
+    },
     {
       "model": "game.question",
       "pk": 6,
@@ -284,9 +279,6 @@
         "explanation": "Incorrect. A WBS is used for scope decomposition, not stakeholder analysis."
       }
     },
-    // Continue with remaining questions for Mission 2...
-  
-    // Mission 3: Risk & Change Management Questions
     {
       "model": "game.question",
       "pk": 11,
@@ -317,5 +309,4 @@
         "explanation": "Incorrect. You can't plan responses to risks you haven't identified yet."
       }
     }
-    // ... Continue with remaining questions for Mission 3
-  ]
+]
