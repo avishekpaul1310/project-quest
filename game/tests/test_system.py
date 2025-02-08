@@ -29,7 +29,7 @@ class SystemFunctionalityTests(TestCase):
         """Test the entire game flow from start to finish"""
         
         # 1. Check initial state
-        response = self.client.get(reverse('dashboard'))
+        response = self.client.get(reverse('game:dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.profile.current_mission_id, 1)
         self.assertEqual(self.profile.total_score, 0)
@@ -43,7 +43,7 @@ class SystemFunctionalityTests(TestCase):
             correct_choice = Choice.objects.get(question=question, is_correct=True)
             
             # Submit answer
-            response = self.client.post(reverse('submit_answer'), {
+            response = self.client.post(reverse('game:submit_answer'), {
                 'question_id': question.id,
                 'choice_id': correct_choice.id
             })
@@ -60,7 +60,7 @@ class SystemFunctionalityTests(TestCase):
         """Test that missions unlock properly"""
         
         # Initially only mission 1 should be accessible
-        response = self.client.get(reverse('available_missions'))
+        response = self.client.get(reverse('game:available_missions'))
         self.assertEqual(response.status_code, 200)
         missions = response.json()['missions']
         self.assertTrue(missions[0]['unlocked'])
@@ -71,7 +71,7 @@ class SystemFunctionalityTests(TestCase):
         self._complete_mission(1)
 
         # Now mission 2 should be unlocked
-        response = self.client.get(reverse('available_missions'))
+        response = self.client.get(reverse('game:available_missions'))
         missions = response.json()['missions']
         self.assertTrue(missions[0]['unlocked'])
         self.assertTrue(missions[1]['unlocked'])
@@ -85,7 +85,7 @@ class SystemFunctionalityTests(TestCase):
         # Test correct answer
         question = questions[0]
         correct_choice = Choice.objects.get(question=question, is_correct=True)
-        response = self.client.post(reverse('submit_answer'), {
+        response = self.client.post(reverse('game:submit_answer'), {
             'question_id': question.id,
             'choice_id': correct_choice.id
         })
@@ -95,7 +95,7 @@ class SystemFunctionalityTests(TestCase):
         # Test incorrect answer
         question = questions[1]
         incorrect_choice = Choice.objects.filter(question=question, is_correct=False).first()
-        response = self.client.post(reverse('submit_answer'), {
+        response = self.client.post(reverse('game:submit_answer'), {
             'question_id': question.id,
             'choice_id': incorrect_choice.id
         })
@@ -106,7 +106,7 @@ class SystemFunctionalityTests(TestCase):
         """Test progress tracking functionality"""
         
         # Check initial progress
-        response = self.client.get(reverse('progress'))
+        response = self.client.get(reverse('game:progress'))
         self.assertEqual(response.status_code, 200)
         progress = response.json()
         self.assertEqual(progress['completed_missions'], 0)
@@ -117,7 +117,7 @@ class SystemFunctionalityTests(TestCase):
         self._answer_questions(1, 3)  # Answer 3 questions from mission 1
 
         # Check updated progress
-        response = self.client.get(reverse('progress'))
+        response = self.client.get(reverse('game:progress'))
         progress = response.json()
         self.assertEqual(progress['questions_answered'], 3)
         self.assertEqual(progress['completed_missions'], 0)  # Mission not complete yet
@@ -126,7 +126,7 @@ class SystemFunctionalityTests(TestCase):
         """Test system error handling"""
         
         # Test invalid question ID
-        response = self.client.post(reverse('submit_answer'), {
+        response = self.client.post(reverse('game:submit_answer'), {
             'question_id': 9999,
             'choice_id': 1
         })
@@ -134,7 +134,7 @@ class SystemFunctionalityTests(TestCase):
 
         # Test invalid choice ID
         question = Question.objects.first()
-        response = self.client.post(reverse('submit_answer'), {
+        response = self.client.post(reverse('game:submit_answer'), {
             'question_id': question.id,
             'choice_id': 9999
         })
@@ -144,7 +144,7 @@ class SystemFunctionalityTests(TestCase):
         self._complete_mission(1)
         question = Question.objects.filter(mission__id=3).first()
         choice = Choice.objects.filter(question=question).first()
-        response = self.client.post(reverse('submit_answer'), {
+        response = self.client.post(reverse('game:submit_answer'), {
             'question_id': question.id,
             'choice_id': choice.id
         })
@@ -156,7 +156,7 @@ class SystemFunctionalityTests(TestCase):
         # Complete first mission
         self._complete_mission(1)
         
-        response = self.client.get(reverse('user_stats'))
+        response = self.client.get(reverse('game:user_stats'))
         self.assertEqual(response.status_code, 200)
         stats = response.json()
         
@@ -170,7 +170,7 @@ class SystemFunctionalityTests(TestCase):
         questions = Question.objects.filter(mission__id=mission_id).order_by('order')
         for question in questions:
             correct_choice = Choice.objects.get(question=question, is_correct=True)
-            self.client.post(reverse('submit_answer'), {
+            self.client.post(reverse('game:submit_answer'), {
                 'question_id': question.id,
                 'choice_id': correct_choice.id
             })
@@ -180,7 +180,7 @@ class SystemFunctionalityTests(TestCase):
         questions = Question.objects.filter(mission__id=mission_id).order_by('order')[:count]
         for question in questions:
             correct_choice = Choice.objects.get(question=question, is_correct=True)
-            self.client.post(reverse('submit_answer'), {
+            self.client.post(reverse('game:submit_answer'), {
                 'question_id': question.id,
                 'choice_id': correct_choice.id
             })

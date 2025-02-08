@@ -4,11 +4,9 @@ from . import views
 app_name = 'game'
 
 urlpatterns = [
-    # Existing URLs
-    path('', views.dashboard, name='dashboard'),
-    path('mission/<int:mission_id>/', views.mission_detail, name='mission_detail'),
-    
-    # New Quiz URLs
-    path('mission/<int:mission_id>/quiz/', views.take_quiz, name='take_quiz'),
-    path('mission/<int:mission_id>/results/', views.mission_results, name='mission_results'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('missions/', views.available_missions, name='available_missions'),
+    path('submit-answer/', views.submit_answer, name='submit_answer'),
+    path('progress/', views.progress, name='progress'),
+    path('stats/', views.user_stats, name='user_stats'),
 ]

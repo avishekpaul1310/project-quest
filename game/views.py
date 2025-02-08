@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse
-from .models import Mission, Question, Choice, PlayerAnswer
+from .models import Mission, Question, Choice, PlayerAnswer, PlayerProfile
 from django.db import transaction
+from django.http import JsonResponse
 
 @login_required
 def dashboard(request):
@@ -12,6 +13,18 @@ def dashboard(request):
     return render(request, 'game/dashboard.html', {
         'player_profile': player_profile,
         'missions': missions,
+    })
+
+@login_required
+def available_missions(request):
+    profile = request.user.playerprofile
+    missions = Mission.objects.all().order_by('id')
+    return JsonResponse({
+        'missions': [{
+            'id': mission.id,
+            'title': mission.title,
+            'unlocked': profile.can_access_mission(mission)
+        } for mission in missions]
     })
 
 @login_required
@@ -170,4 +183,18 @@ def mission_results(request, mission_id):
     return render(request, 'game/mission_results.html', {
         'mission': mission,
         'answers': answers,
+    })
+
+@login_required
+def user_stats(request):
+    profile = request.user.playerprofile
+    answers = PlayerAnswer.objects.filter(player=profile)
+    correct_answers = answers.filter(selected_choice__is_correct=True).count()
+    total_attempts = answers.count()
+    
+    return JsonResponse({
+        'missions_completed': profile.completed_missions.count(),
+        'correct_answers': correct_answers,
+        'total_questions_attempted': total_attempts,
+        'accuracy': round(correct_answers / total_attempts * 100 if total_attempts > 0 else 0)
     })
