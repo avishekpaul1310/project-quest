@@ -20,5 +20,16 @@
             "best_practices": "• Regular communication\n• Address concerns early\n• Document stakeholder requirements",
             "is_active": true
         }
+    },
+    {
+        "model": "game.mission",
+        "pk": 3,
+        "fields": {
+            "title": "Risk & Change Management",
+            "order": 3,
+            "key_concepts": "• Identify potential risks\n• Assess risk impact and probability\n• Plan risk responses\n• Manage change requests",
+            "best_practices": "• Regular risk reviews\n• Document all changes\n• Communicate changes to stakeholders\n• Update project plans accordingly",
+            "is_active": true
+        }
     }
 ]

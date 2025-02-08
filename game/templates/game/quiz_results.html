@@ -1,0 +1,37 @@
+{% extends 'game/base.html' %}
+
+{% block content %}
+<div class="quiz-results">
+    <h2>{{ mission.title }} - Results</h2>
+    
+    <div class="score-summary">
+        <h3>Your Score: {{ score }} points</h3>
+    </div>
+
+    {% for answer in answers %}
+    <div class="question-result {% if answer.is_correct %}correct{% else %}incorrect{% endif %}">
+        <h4>Question {{ answer.question.order }}: {{ answer.question.text }}</h4>
+        <p>Your answer: {{ answer.selected_choice.text }}</p>
+        
+        {% if not answer.is_correct %}
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <p>{{ answer.selected_choice.explanation }}</p>
+            <p><strong>Correct Answer:</strong> {{ answer.question.choices.get_correct.text }}</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <div class="navigation">
+        {% if mission_completed %}
+            <a href="{% url 'game:dashboard' %}" class="button">Return to Dashboard</a>
+            {% if next_mission %}
+                <a href="{% url 'game:take_quiz' next_mission.id %}" class="button primary">Start Next Mission</a>
+            {% endif %}
+        {% else %}
+            <a href="{% url 'game:take_quiz' mission.id %}" class="button">Retry Mission</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

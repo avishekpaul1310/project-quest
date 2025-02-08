@@ -135,10 +135,24 @@ def take_quiz(request, mission_id):
                 messages.info(request, f'You scored {player.total_score} points. Try again to complete the mission!')
 
             return redirect('game:mission_results', mission_id=mission_id)
+        
+            answers = PlayerAnswer.objects.filter(
+                player=player,
+                question__mission=mission
+            ).select_related('question', 'selected_choice')
+            
+            return render(request, 'game/quiz_results.html', {
+                'mission': mission,
+                'answers': answers,
+                'score': player.total_score,
+                'mission_completed': answers_correct,
+                'next_mission': Mission.objects.filter(order=mission.order + 1).first()
+            })
 
     return render(request, 'game/take_quiz.html', {
         'mission': mission,
         'questions': questions,
+
     })
 
 @login_required

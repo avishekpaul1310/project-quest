@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 class Mission(models.Model):
     title = models.CharField(max_length=200)
@@ -16,6 +17,15 @@ class Mission(models.Model):
 
     def __str__(self):
         return f"Mission {self.order}: {self.title}"
+    
+    def clean(self):
+        """Ensure mission has exactly 5 questions"""
+        if self.questions.count() != 5:
+            raise ValidationError("Each mission must have exactly 5 questions.")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
 class Question(models.Model):
     mission = models.ForeignKey(Mission, on_delete=models.CASCADE, related_name='questions')
