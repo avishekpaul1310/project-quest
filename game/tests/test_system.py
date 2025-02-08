@@ -102,25 +102,25 @@ class SystemFunctionalityTests(TestCase):
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.total_score, 10)  # Score shouldn't change
 
-    def test_progress_tracking(self):
-        """Test progress tracking functionality"""
-        
-        # Check initial progress
-        response = self.client.get(reverse('game:progress'))
-        self.assertEqual(response.status_code, 200)
-        progress = response.json()
-        self.assertEqual(progress['completed_missions'], 0)
-        self.assertEqual(progress['total_score'], 0)
-        self.assertEqual(progress['questions_answered'], 0)
+def test_progress_tracking(self):
+    """Test progress tracking functionality"""
+    
+    # Check initial progress
+    response = self.client.get(reverse('game:progress'))  # This will use player_progress view
+    self.assertEqual(response.status_code, 200)
+    progress = response.json()
+    self.assertEqual(progress['completed_missions'], 0)
+    self.assertEqual(progress['total_score'], 0)
+    self.assertEqual(progress['questions_answered'], 0)
 
-        # Complete some questions
-        self._answer_questions(1, 3)  # Answer 3 questions from mission 1
+    # Complete some questions
+    self._answer_questions(1, 3)  # Answer 3 questions from mission 1
 
-        # Check updated progress
-        response = self.client.get(reverse('game:progress'))
-        progress = response.json()
-        self.assertEqual(progress['questions_answered'], 3)
-        self.assertEqual(progress['completed_missions'], 0)  # Mission not complete yet
+    # Check updated progress
+    response = self.client.get(reverse('game:progress'))
+    progress = response.json()
+    self.assertEqual(progress['questions_answered'], 3)
+    self.assertEqual(progress['completed_missions'], 0)  # Mission not complete yet
 
     def test_error_handling(self):
         """Test system error handling"""

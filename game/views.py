@@ -8,11 +8,12 @@ from django.http import JsonResponse
 
 @login_required
 def dashboard(request):
-    player_profile = request.user.playerprofile
-    missions = Mission.objects.filter(is_active=True).order_by('order')
-    return render(request, 'game/dashboard.html', {
-        'player_profile': player_profile,
-        'missions': missions,
+    """Display the user's dashboard with current progress"""
+    profile = request.user.playerprofile
+    return JsonResponse({
+        'current_mission': profile.current_mission_id,
+        'total_score': profile.total_score,
+        'completed_missions': list(profile.completed_missions.values_list('id', flat=True))
     })
 
 @login_required
@@ -93,6 +94,19 @@ def submit_answer(request, mission_id):
     
     player_profile.save()
     return redirect('game:dashboard')
+
+@login_required
+def player_progress(request):  # Changed from progress to player_progress
+    """Get the player's current progress"""
+    profile = request.user.playerprofile
+    answered_questions = PlayerAnswer.objects.filter(player=profile)
+    
+    return JsonResponse({
+        'completed_missions': profile.completed_missions.count(),
+        'total_score': profile.total_score,
+        'questions_answered': answered_questions.count(),
+        'current_mission': profile.current_mission_id
+    })
 
 @login_required
 def take_quiz(request, mission_id):
@@ -187,6 +201,7 @@ def mission_results(request, mission_id):
 
 @login_required
 def user_stats(request):
+    """Get detailed statistics about the user's performance"""
     profile = request.user.playerprofile
     answers = PlayerAnswer.objects.filter(player=profile)
     correct_answers = answers.filter(selected_choice__is_correct=True).count()
