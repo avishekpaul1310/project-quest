@@ -7,6 +7,6 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('missions/', views.available_missions, name='available_missions'),
     path('submit-answer/', views.submit_answer, name='submit_answer'),
-    path('progress/', views.player_progress, name='progress'),  # Changed from progress to player_progress
+    path('progress/', views.player_progress, name='progress'),
     path('stats/', views.user_stats, name='user_stats'),
 ]

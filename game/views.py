@@ -46,54 +46,58 @@ def mission_detail(request, mission_id):
     })
 
 @login_required
-def submit_answer(request, mission_id):
+def submit_answer(request):
+    """Handle submission of answers to questions"""
     if request.method != 'POST':
-        return redirect('game:mission_detail', mission_id=mission_id)
-    
-    mission = get_object_or_404(Mission, pk=mission_id)
-    player_profile = request.user.playerprofile
-    
-    if not player_profile.can_access_mission(mission):
-        messages.error(request, 'Complete previous missions first!')
-        return redirect('game:dashboard')
-    
-    questions = mission.questions.all()
-    score = 0
-    total_questions = questions.count()
-    
-    for question in questions:
-        choice_id = request.POST.get(f'question_{question.id}')
-        if not choice_id:
-            messages.error(request, 'Please answer all questions!')
-            return redirect('game:mission_detail', mission_id=mission_id)
-            
-        choice = get_object_or_404(Choice, id=choice_id)
-        
-        # Record the answer
-        PlayerAnswer.objects.update_or_create(
-            player=player_profile,
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    question_id = request.POST.get('question_id')
+    choice_id = request.POST.get('choice_id')
+
+    if not question_id or not choice_id:
+        return JsonResponse({'error': 'Missing required fields'}, status=400)
+
+    try:
+        question = get_object_or_404(Question, id=question_id)
+        choice = get_object_or_404(Choice, id=choice_id, question=question)
+        profile = request.user.playerprofile
+
+        # Check if mission is accessible
+        if not profile.can_access_mission(question.mission):
+            return JsonResponse({'error': 'Mission not unlocked'}, status=403)
+
+        # Record answer
+        player_answer = PlayerAnswer.objects.create(
+            player=profile,
             question=question,
-            defaults={
-                'selected_choice': choice,
-                'is_correct': choice.is_correct
-            }
+            selected_choice=choice
         )
-        
+
+        # Update score if answer is correct
         if choice.is_correct:
-            score += 10
-    
-    # Update player's score
-    player_profile.total_score += score
-    
-    # If perfect score, mark mission as completed
-    if score == total_questions * 10:
-        player_profile.completed_missions.add(mission)
-        messages.success(request, f'Congratulations! Mission completed with perfect score!')
-    else:
-        messages.info(request, f'You scored {score} points. Try again for a perfect score!')
-    
-    player_profile.save()
-    return redirect('game:dashboard')
+            profile.total_score += 10
+            profile.save()
+
+            # Check if mission is completed
+            mission_questions = Question.objects.filter(mission=question.mission)
+            answered_correctly = PlayerAnswer.objects.filter(
+                player=profile,
+                question__mission=question.mission,
+                selected_choice__is_correct=True
+            ).count()
+
+            if answered_correctly == mission_questions.count():
+                profile.completed_missions.add(question.mission)
+                profile.save()
+
+        return JsonResponse({
+            'result': choice.is_correct,
+            'explanation': choice.explanation,
+            'mission_completed': question.mission in profile.completed_missions.all()
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
 @login_required
 def player_progress(request):  # Changed from progress to player_progress
