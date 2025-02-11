@@ -82,6 +82,10 @@ class SystemFunctionalityTests(TestCase):
         mission = Mission.objects.get(id=1)
         question = Question.objects.filter(mission=mission).first()
         
+        # Reset profile score to ensure clean state
+        self.profile.total_score = 0
+        self.profile.save()
+        
         # Test correct answer
         correct_choice = Choice.objects.get(question=question, is_correct=True)
         response = self.client.post(reverse('game:submit_answer'), {
@@ -91,6 +95,15 @@ class SystemFunctionalityTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.total_score, 10)
+
+        # Test answering same question again (should not increase score)
+        response = self.client.post(reverse('game:submit_answer'), {
+            'question_id': question.id,
+            'choice_id': correct_choice.id
+        })
+        self.assertEqual(response.status_code, 200)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.total_score, 10)  # Score should remain the same
 
         # Test incorrect answer
         question2 = Question.objects.filter(mission=mission)[1]

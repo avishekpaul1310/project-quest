@@ -66,6 +66,19 @@ def submit_answer(request):
         if not profile.can_access_mission(question.mission):
             return JsonResponse({'error': 'Mission not unlocked'}, status=403)
 
+        # Check if question was already answered
+        existing_answer = PlayerAnswer.objects.filter(
+            player=profile,
+            question=question
+        ).first()
+
+        if existing_answer:
+            return JsonResponse({
+                'error': 'Question already answered',
+                'result': existing_answer.selected_choice.is_correct,
+                'explanation': existing_answer.selected_choice.explanation
+            })
+
         # Record answer
         player_answer = PlayerAnswer.objects.create(
             player=profile,
@@ -75,8 +88,8 @@ def submit_answer(request):
 
         # Update score if answer is correct
         if choice.is_correct:
-            profile.total_score += 10
-            profile.save()
+            profile.total_score = profile.total_score + 10
+            profile.save(update_fields=['total_score'])
 
             # Check if mission is completed
             mission_questions = Question.objects.filter(mission=question.mission)
@@ -88,17 +101,16 @@ def submit_answer(request):
 
             if answered_correctly == mission_questions.count():
                 profile.completed_missions.add(question.mission)
-                profile.save()
 
         return JsonResponse({
             'result': choice.is_correct,
             'explanation': choice.explanation,
-            'mission_completed': question.mission in profile.completed_missions.all()
+            'mission_completed': question.mission in profile.completed_missions.all(),
+            'current_score': profile.total_score
         })
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
-
 @login_required
 def player_progress(request):  # Changed from progress to player_progress
     """Get the player's current progress"""

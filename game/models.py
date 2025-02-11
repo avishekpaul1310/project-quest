@@ -65,44 +65,24 @@ class Choice(models.Model):
         
 class PlayerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    completed_missions = models.ManyToManyField(Mission, blank=True, related_name='completed_by')
+    current_mission = models.ForeignKey(Mission, on_delete=models.SET_NULL, null=True, blank=True)
     total_score = models.IntegerField(default=0)
-    current_mission = models.ForeignKey(
-        Mission,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='current_players'
-    )
-
-    def __str__(self):
-        return f"{self.user.username}'s Profile"
-
-    def add_score(self, points):
-        """Add points to total score"""
-        self.total_score += points
-        self.save(update_fields=['total_score'])
+    completed_missions = models.ManyToManyField(Mission, related_name='completed_by', blank=True)
 
     def can_access_mission(self, mission):
-        """Check if player can access a mission"""
-        if mission.order == 1:
+        if mission.id == 1:
             return True
-        prev_mission = Mission.objects.filter(
-            is_active=True,
-            order=mission.order - 1
-        ).first()
-        return prev_mission and self.completed_missions.filter(id=prev_mission.id).exists()
-        
+        previous_mission = Mission.objects.filter(id=mission.id - 1).first()
+        return previous_mission in self.completed_missions.all()
+
 class PlayerAnswer(models.Model):
-    player = models.ForeignKey(PlayerProfile, on_delete=models.CASCADE, related_name='answers')
+    player = models.ForeignKey(PlayerProfile, on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     selected_choice = models.ForeignKey(Choice, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ['player', 'question']
-
+        unique_together = ['player', 'question'] 
     def __str__(self):
         return f"{self.player.user.username}'s answer to {self.question}"
 
