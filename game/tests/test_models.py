@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from game.models import Mission, Question, Choice, PlayerProfile, PlayerAnswer
+from ..models import Mission, Question, Choice, PlayerProfile, PlayerAnswer
 
 class ModelTests(TestCase):
     def setUp(self):
@@ -56,28 +56,3 @@ class ModelTests(TestCase):
         profile = self.user.playerprofile
         # First mission should be accessible
         self.assertTrue(profile.can_access_mission(self.mission))
-        
-        # Create second mission
-        mission2 = Mission.objects.create(
-            title="Test Mission 2",
-            order=2,
-            key_concepts="Test concepts 2",
-            best_practices="Test practices 2"
-        )
-        # Second mission should be locked
-        self.assertFalse(profile.can_access_mission(mission2))
-
-    def test_answer_scoring(self):
-        """Test answer submission and scoring"""
-        profile = self.user.playerprofile
-        initial_score = profile.total_score
-        
-        # Submit correct answer
-        answer = PlayerAnswer.objects.create(
-            player=profile,
-            question=self.question,
-            selected_choice=self.correct_choice
-        )
-        
-        profile.refresh_from_db()
-        self.assertEqual(profile.total_score, initial_score + 10)

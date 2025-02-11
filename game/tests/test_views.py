@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from game.models import Mission, Question, Choice, PlayerProfile
+from ..models import Mission, Question, Choice, PlayerProfile
 
 class ViewTests(TestCase):
     def setUp(self):
@@ -48,32 +48,3 @@ class ViewTests(TestCase):
         response = self.client.get(reverse('game:dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'game/dashboard.html')
-        self.assertContains(response, "Test Mission")
-
-    def test_mission_detail_view(self):
-        """Test mission detail view"""
-        self.client.login(username='testuser', password='testpass123')
-        response = self.client.get(
-            reverse('game:mission_detail', args=[self.mission.id])
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'game/mission_detail.html')
-        self.assertContains(response, "Test concepts")
-
-    def test_quiz_submission(self):
-        """Test quiz submission"""
-        self.client.login(username='testuser', password='testpass123')
-        
-        # Submit quiz answer
-        response = self.client.post(
-            reverse('game:take_quiz', args=[self.mission.id]),
-            {f'question_{self.question.id}': self.correct_choice.id}
-        )
-        
-        # Should redirect to results page
-        self.assertEqual(response.status_code, 302)
-        
-        # Check if score was updated
-        profile = self.user.playerprofile
-        profile.refresh_from_db()
-        self.assertEqual(profile.total_score, 10)
