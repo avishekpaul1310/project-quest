@@ -7,5 +7,6 @@ urlpatterns = [
     path('', views.dashboard, name='dashboard'),
     path('mission/<int:mission_id>/', views.mission_detail, name='mission_detail'),
     path('mission/<int:mission_id>/quiz/', views.take_quiz, name='take_quiz'),
+    path('mission/<int:mission_id>/submit/', views.submit_answer, name='submit_answer'),  # Add this line
     path('progress/', views.player_progress, name='player_progress'),
 ]

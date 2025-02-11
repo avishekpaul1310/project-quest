@@ -47,70 +47,36 @@ def mission_detail(request, mission_id):
     })
 
 @login_required
-def submit_answer(request):
-    """Handle submission of answers to questions"""
+def submit_answer(request, mission_id):
     if request.method != 'POST':
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
-
-    question_id = request.POST.get('question_id')
-    choice_id = request.POST.get('choice_id')
-
-    if not question_id or not choice_id:
-        return JsonResponse({'error': 'Missing required fields'}, status=400)
-
-    try:
-        with transaction.atomic():
-            question = get_object_or_404(Question, id=question_id)
-            choice = get_object_or_404(Choice, id=choice_id, question=question)
-            profile = request.user.playerprofile
-
-            # Check if mission is accessible
-            if not profile.can_access_mission(question.mission):
-                return JsonResponse({'error': 'Mission not unlocked'}, status=403)
-
-            # Check if question was already answered
-            existing_answer = PlayerAnswer.objects.filter(
-                player=profile,
-                question=question
-            ).first()
-
-            if existing_answer:
-                return JsonResponse({
-                    'error': 'Question already answered',
-                    'result': existing_answer.selected_choice.is_correct,
-                    'explanation': existing_answer.selected_choice.explanation
-                })
-
-            # Record answer
-            player_answer = PlayerAnswer.objects.create(
-                player=profile,
+        return redirect('game:mission_detail', mission_id=mission_id)
+        
+    mission = get_object_or_404(Mission, id=mission_id)
+    correct_answers = 0
+    total_questions = mission.questions.count()
+    
+    for question in mission.questions.all():
+        choice_id = request.POST.get(f'question_{question.id}')
+        if choice_id:
+            choice = Choice.objects.get(id=choice_id)
+            PlayerAnswer.objects.update_or_create(
+                player=request.user.playerprofile,
                 question=question,
-                selected_choice=choice
+                defaults={'selected_choice': choice}
             )
-
-            # Score update is handled by PlayerAnswer.save()
-            profile.refresh_from_db()
-
-            # Check if mission is completed
-            mission_questions = Question.objects.filter(mission=question.mission)
-            answered_correctly = PlayerAnswer.objects.filter(
-                player=profile,
-                question__mission=question.mission,
-                selected_choice__is_correct=True
-            ).count()
-
-            if answered_correctly == mission_questions.count():
-                profile.completed_missions.add(question.mission)
-
-            return JsonResponse({
-                'result': choice.is_correct,
-                'explanation': choice.explanation,
-                'mission_completed': question.mission in profile.completed_missions.all(),
-                'current_score': profile.total_score
-            })
-
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
+            if choice.is_correct:
+                correct_answers += 1
+    
+    score = (correct_answers / total_questions) * 100
+    if score >= 70:  # Pass threshold
+        request.user.playerprofile.completed_missions.add(mission)
+        request.user.playerprofile.total_score += int(score)
+        request.user.playerprofile.save()
+        messages.success(request, f'Congratulations! You passed with {score}%')
+    else:
+        messages.error(request, f'You need 70% to pass. Your score: {score}%')
+    
+    return redirect('game:mission_detail', mission_id=mission_id)
         
 @login_required
 def player_progress(request):  # Changed from progress to player_progress
