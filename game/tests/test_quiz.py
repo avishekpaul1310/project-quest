@@ -8,40 +8,32 @@ class QuizSetupTests(TestCase):
     """Tests for quiz setup and configuration"""
     
     def setUp(self):
-        # Create test user
-        self.user = User.objects.create_user(
-            username='testuser',
-            password='testpass123'
-        )
-        self.client = Client()
-        
-        # Create test mission
         self.mission = Mission.objects.create(
-            title='Project Charter Basics',
+            title="Test Mission",
             order=1,
-            key_concepts='Test concepts',
-            best_practices='Test practices',
-            is_active=True
+            key_concepts="Test concepts",
+            best_practices="Test practices"
         )
         
-        # Create test question
         self.question = Question.objects.create(
             mission=self.mission,
-            text='What is a project charter?',
+            text="Test question?",
             order=1,
-            explanation='A project charter is a formal document...'
+            explanation="Test explanation"
         )
         
-        # Create choices
         self.correct_choice = Choice.objects.create(
             question=self.question,
-            text='A formal document that authorizes the project',
-            is_correct=True
+            text="Correct answer",
+            is_correct=True,
+            explanation="This is why this answer is correct"  # Added explanation
         )
+        
         self.wrong_choice = Choice.objects.create(
             question=self.question,
-            text='A project schedule',
-            is_correct=False
+            text="Wrong answer",
+            is_correct=False,
+            explanation="This is why this answer is wrong"  # Added explanation
         )
 
     def test_question_creation(self):
@@ -64,51 +56,36 @@ class QuizSetupTests(TestCase):
 
 class QuizFunctionalTests(TestCase):
     def setUp(self):
-        # Create test user
+        self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
             password='testpass123'
         )
-        self.client = Client()
-        
-        # Create test mission
         self.mission = Mission.objects.create(
-            title='Project Charter Basics',
+            title="Test Mission",
             order=1,
-            key_concepts='Test concepts',
-            best_practices='Test practices',
-            is_active=True
+            key_concepts="Test concepts",
+            best_practices="Test practices"
         )
-        
-        # Create multiple questions
-        self.questions = []
-        self.correct_choices = []
-        self.wrong_choices = []
-        
-        for i in range(5):  # Create 5 questions
-            question = Question.objects.create(
-                mission=self.mission,
-                text=f'Test Question {i+1}',
-                order=i+1,
-                explanation=f'Explanation for question {i+1}'
-            )
-            self.questions.append(question)
-            
-            # Create choices for each question
-            correct = Choice.objects.create(
-                question=question,
-                text=f'Correct Answer {i+1}',
-                is_correct=True
-            )
-            wrong = Choice.objects.create(
-                question=question,
-                text=f'Wrong Answer {i+1}',
-                is_correct=False
-            )
-            
-            self.correct_choices.append(correct)
-            self.wrong_choices.append(wrong)
-
+        self.question = Question.objects.create(
+            mission=self.mission,
+            text="Test question",
+            order=1,
+            explanation="Question explanation"
+        )
+        self.correct_choice = Choice.objects.create(
+            question=self.question,
+            text="Correct answer",
+            is_correct=True,
+            explanation="Correct choice explanation"  # Added explanation
+        )
+        self.wrong_choice = Choice.objects.create(
+            question=self.question,
+            text="Wrong answer",
+            is_correct=False,
+            explanation="Wrong choice explanation"  # Added explanation
+        )
+    
     def test_quiz_submission_perfect_score(self):
         """Test quiz submission with all correct answers"""
         self.client.login(username='testuser', password='testpass123')

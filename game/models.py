@@ -9,13 +9,28 @@ class Mission(models.Model):
     order = models.IntegerField(unique=True)
     key_concepts = models.TextField()
     best_practices = models.TextField()
-    is_active = models.BooleanField(default=True)
 
-    class Meta:
-        ordering = ['order']
+    def clean(self):
+        super().clean()
+        errors = {}
+        
+        # Check number of questions
+        question_count = self.questions.count()
+        if question_count != 5 and not self._state.adding:
+            errors['questions'] = 'Mission must have exactly 5 questions'
+        
+        # Check that each question has at least one correct answer
+        if not self._state.adding:
+            for question in self.questions.all():
+                if not question.choices.filter(is_correct=True).exists():
+                    errors['questions'] = f'Question "{question.text}" must have at least one correct answer'
+        
+        if errors:
+            raise ValidationError(errors)
 
-    def __str__(self):
-        return f"Mission {self.order}: {self.title}"
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 class Question(models.Model):
     mission = models.ForeignKey(Mission, on_delete=models.CASCADE, related_name='questions')
@@ -57,17 +72,29 @@ class Choice(models.Model):
 class PlayerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     total_score = models.IntegerField(default=0)
-    current_mission = models.ForeignKey(Mission, on_delete=models.SET_NULL, null=True, blank=True)
-    completed_missions = models.ManyToManyField(Mission, related_name='completed_by', blank=True)
-
-    def __str__(self):
-        return f"Profile for {self.user.username}"
-
+    completed_missions = models.ManyToManyField('Mission')
+    
+    @property
+    def current_mission_id(self):
+        """Returns the ID of the current mission (first uncompleted)"""
+        completed_ids = self.completed_missions.values_list('id', flat=True)
+        next_mission = Mission.objects.exclude(id__in=completed_ids).order_by('order').first()
+        return next_mission.id if next_mission else None
+    
     def can_access_mission(self, mission):
+        """Check if user can access a specific mission"""
         if mission.order == 1:
             return True
         prev_mission = Mission.objects.filter(order=mission.order - 1).first()
-        return prev_mission in self.completed_missions.all()
+        return prev_mission in self.completed_missions.all() if prev_mission else False
+        
+    def has_answered_correctly(self, question):
+        """Check if user has already answered this question correctly"""
+        return PlayerAnswer.objects.filter(
+            player=self,
+            question=question,
+            selected_choice__is_correct=True
+        ).exists()
 
 class PlayerAnswer(models.Model):
     player = models.ForeignKey(PlayerProfile, on_delete=models.CASCADE)

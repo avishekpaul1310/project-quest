@@ -3,10 +3,10 @@
         "model": "game.mission",
         "pk": 1,
         "fields": {
-            "title": "Project Initialization",
+            "title": "Project Initiation",
             "order": 1,
-            "key_concepts": "Project initiation fundamentals",
-            "best_practices": "Best practices for starting projects"
+            "key_concepts": "Understanding project basics",
+            "best_practices": "Best practices for project initiation"
         }
     },
     {
@@ -15,8 +15,18 @@
         "fields": {
             "title": "Project Planning",
             "order": 2,
-            "key_concepts": "Planning concepts",
-            "best_practices": "Planning best practices"
+            "key_concepts": "Project planning fundamentals",
+            "best_practices": "Best practices for project planning"
+        }
+    },
+    {
+        "model": "game.mission",
+        "pk": 3,
+        "fields": {
+            "title": "Project Execution",
+            "order": 3,
+            "key_concepts": "Project execution fundamentals",
+            "best_practices": "Best practices for project execution"
         }
     }
 ]
