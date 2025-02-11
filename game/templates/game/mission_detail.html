@@ -1,36 +1,38 @@
 {% extends 'game/base.html' %}
 
-{% block title %}{{ mission.title }} - Project Management Quest{% endblock %}
+{% block title %}{{ mission.title }}{% endblock %}
 
 {% block content %}
-<div class="mission-detail">
-    <h2>{{ mission.title }}</h2>
+<div class="mission-container">
+    <h1>{{ mission.title }}</h1>
+    
     <div class="mission-content">
-        <h3>Key Concepts</h3>
-        <p>{{ mission.key_concepts }}</p>
-        
-        <h3>Best Practices</h3>
-        <p>{{ mission.best_practices }}</p>
-        
-        <form method="post" action="{% url 'game:submit_answer' mission.id %}">
-            {% csrf_token %}
-            {% for question in questions %}
-            <div class="question">
-                <h4>{{ question.text }}</h4>
-                {% for choice in question.choices.all %}
-                <div class="choice">
-                    <input type="radio" 
-                           name="question_{{ question.id }}" 
-                           id="choice_{{ choice.id }}"
-                           value="{{ choice.id }}"
-                           required>
-                    <label for="choice_{{ choice.id }}">{{ choice.text }}</label>
-                </div>
-                {% endfor %}
+        <section class="key-concepts">
+            <h2>Key Concepts</h2>
+            <div class="content-box">
+                {{ mission.key_concepts|linebreaks }}
             </div>
-            {% endfor %}
-            <button type="submit">Submit Answers</button>
-        </form>
+        </section>
+        
+        <section class="best-practices">
+            <h2>Best Practices</h2>
+            <div class="content-box">
+                {{ mission.best_practices|linebreaks }}
+            </div>
+        </section>
+    </div>
+    
+    <div class="action-container">
+        {% if completed %}
+            <div class="completion-message">
+                <span class="completion-badge">✓ Mission Completed</span>
+                <a href="{% url 'game:take_quiz' mission.id %}" class="retry-btn">Retry Quiz</a>
+            </div>
+        {% else %}
+            <a href="{% url 'game:take_quiz' mission.id %}" class="start-quiz-btn">Start Quiz</a>
+        {% endif %}
+        
+        <a href="{% url 'game:dashboard' %}" class="back-btn">Back to Dashboard</a>
     </div>
 </div>
 {% endblock %}

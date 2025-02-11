@@ -3,52 +3,36 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="dashboard">
-    <header class="dashboard-header">
-        <h1>Welcome, {{ user.username }}!</h1>
-        <div class="player-stats">
-            <div class="stat-card">
-                <span class="stat-label">Total Score</span>
-                <span class="stat-value">{{ user.playerprofile.total_score }}</span>
+<div class="dashboard-container">
+    <h1>Project Management Missions</h1>
+    
+    <div class="missions-grid">
+        {% for mission in missions %}
+        <div class="mission-card {% if mission in user.playerprofile.completed_missions.all %}completed{% endif %}
+                               {% if not user.playerprofile.can_access_mission %}locked{% endif %}">
+            <div class="mission-header">
+                <span class="mission-number">{{ mission.order }}</span>
+                <h2>{{ mission.title }}</h2>
             </div>
-            <div class="stat-card">
-                <span class="stat-label">Missions Completed</span>
-                <span class="stat-value">{{ user.playerprofile.completed_missions.count }}</span>
-            </div>
-        </div>
-    </header>
-
-    <section class="missions-grid">
-        <h2>Available Missions</h2>
-        <div class="mission-cards">
-            {% for mission in missions %}
-                <div class="mission-card {% if mission in user.playerprofile.completed_missions.all %}completed{% elif user.playerprofile.can_access_mission %}available{% else %}locked{% endif %}">
-                    <div class="mission-header">
-                        <span class="mission-number">Mission {{ mission.order }}</span>
-                        <span class="mission-status">
-                            {% if mission in user.playerprofile.completed_missions.all %}
-                                ✅ Completed
-                            {% elif user.playerprofile.can_access_mission %}
-                                🎯 Available
-                            {% else %}
-                                🔒 Locked
-                            {% endif %}
-                        </span>
-                    </div>
-                    <h3 class="mission-title">{{ mission.title }}</h3>
-                    <div class="mission-preview">
-                        <p>{{ mission.key_concepts|truncatewords:20 }}</p>
-                    </div>
-                    <div class="mission-actions">
-                        {% if user.playerprofile.can_access_mission %}
-                            <a href="{% url 'game:mission_detail' mission.id %}" class="button primary">Start Mission</a>
-                        {% else %}
-                            <span class="locked-message">Complete previous missions to unlock</span>
-                        {% endif %}
-                    </div>
+            
+            {% if mission in user.playerprofile.completed_missions.all %}
+                <div class="mission-status completed">
+                    <span class="status-icon">✓</span>
+                    <span class="status-text">Completed</span>
+                    <a href="{% url 'game:mission_detail' mission.id %}" class="review-btn">Review</a>
                 </div>
-            {% endfor %}
+            {% elif user.playerprofile.can_access_mission %}
+                <div class="mission-status available">
+                    <a href="{% url 'game:mission_detail' mission.id %}" class="start-btn">Start Mission</a>
+                </div>
+            {% else %}
+                <div class="mission-status locked">
+                    <span class="status-icon">🔒</span>
+                    <span class="status-text">Complete previous mission first</span>
+                </div>
+            {% endif %}
         </div>
-    </section>
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}

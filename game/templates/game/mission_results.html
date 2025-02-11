@@ -1,35 +1,42 @@
 {% extends 'game/base.html' %}
 
+{% block title %}Mission Results{% endblock %}
+
 {% block content %}
-<div class="results-container">
-    <h2>Mission Results: {{ mission.title }}</h2>
+<div class="mission-results-container">
+    <h1>Mission Results - {{ mission.title }}</h1>
     
-    {% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-        <div class="message {{ message.tags }}">
-            {{ message }}
+    <div class="mission-summary">
+        <div class="completion-status">
+            <h2>Mission Status</h2>
+            <div class="status-box {% if mission_complete %}complete{% else %}incomplete{% endif %}">
+                {% if mission_complete %}
+                    Mission Complete!
+                {% else %}
+                    Mission In Progress
+                {% endif %}
+            </div>
         </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    
-    {% for answer in answers %}
-    <div class="question-result {% if answer.selected_choice.is_correct %}correct{% else %}incorrect{% endif %}">
-        <h4>Question {{ answer.question.order }}: {{ answer.question.text }}</h4>
-        <p>Your answer: {{ answer.selected_choice.text }}</p>
         
-        {% if not answer.selected_choice.is_correct %}
-        <div class="explanation">
-            <p>Explanation: {{ answer.question.explanation }}</p>
+        <div class="stats">
+            <div class="stat-item">
+                <label>Questions Completed</label>
+                <span>{{ questions_answered }} / {{ total_questions }}</span>
+            </div>
+            <div class="stat-item">
+                <label>Current Score</label>
+                <span>{{ current_score }}%</span>
+            </div>
         </div>
-        {% endif %}
     </div>
-    {% endfor %}
-    
-    <div class="actions">
-        <a href="{% url 'game:take_quiz' mission.id %}" class="button">Try Again</a>
-        <a href="{% url 'game:dashboard' %}" class="button">Back to Dashboard</a>
+
+    <div class="action-buttons">
+        {% if mission_complete %}
+            <a href="{% url 'game:dashboard' %}" class="next-mission-btn">Next Mission</a>
+        {% else %}
+            <a href="{% url 'game:take_quiz' mission.id %}" class="continue-btn">Continue Mission</a>
+        {% endif %}
+        <a href="{% url 'game:dashboard' %}" class="dashboard-btn">Back to Dashboard</a>
     </div>
 </div>
 {% endblock %}

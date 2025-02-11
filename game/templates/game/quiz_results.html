@@ -1,37 +1,60 @@
 {% extends 'game/base.html' %}
 
+{% block title %}Quiz Results{% endblock %}
+
 {% block content %}
-<div class="quiz-results">
-    <h2>{{ mission.title }} - Results</h2>
+<div class="results-container">
+    <h1>Quiz Results - {{ mission.title }}</h1>
     
     <div class="score-summary">
-        <h3>Your Score: {{ score }} points</h3>
-    </div>
-
-    {% for answer in answers %}
-    <div class="question-result {% if answer.is_correct %}correct{% else %}incorrect{% endif %}">
-        <h4>Question {{ answer.question.order }}: {{ answer.question.text }}</h4>
-        <p>Your answer: {{ answer.selected_choice.text }}</p>
-        
-        {% if not answer.is_correct %}
-        <div class="explanation">
-            <p><strong>Explanation:</strong></p>
-            <p>{{ answer.selected_choice.explanation }}</p>
-            <p><strong>Correct Answer:</strong> {{ answer.question.choices.get_correct.text }}</p>
+        <div class="score-circle {% if passed %}passed{% else %}failed{% endif %}">
+            {{ score }}%
         </div>
-        {% endif %}
-    </div>
-    {% endfor %}
-
-    <div class="navigation">
-        {% if mission_completed %}
-            <a href="{% url 'game:dashboard' %}" class="button">Return to Dashboard</a>
-            {% if next_mission %}
-                <a href="{% url 'game:take_quiz' next_mission.id %}" class="button primary">Start Next Mission</a>
+        <h2 class="result-status">
+            {% if passed %}
+                Mission Completed! 🎉
+            {% else %}
+                Try Again! 💪
             {% endif %}
-        {% else %}
-            <a href="{% url 'game:take_quiz' mission.id %}" class="button">Retry Mission</a>
+        </h2>
+    </div>
+
+    <div class="questions-review">
+        {% for answer in answers %}
+        <div class="question-review {% if answer.is_correct %}correct{% else %}incorrect{% endif %}">
+            <h3>Question {{ forloop.counter }}</h3>
+            <p class="question-text">{{ answer.question.text }}</p>
+            
+            <div class="answer-details">
+                <p class="your-answer">
+                    Your answer: {{ answer.selected_choice.text }}
+                    {% if answer.is_correct %}
+                        <span class="correct-mark">✓</span>
+                    {% else %}
+                        <span class="incorrect-mark">✗</span>
+                    {% endif %}
+                </p>
+                
+                {% if not answer.is_correct %}
+                <p class="correct-answer">
+                    Correct answer: {{ answer.question.choices.get_correct_choice.text }}
+                </p>
+                {% endif %}
+                
+                <p class="explanation">
+                    {{ answer.selected_choice.explanation }}
+                </p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="action-buttons">
+        {% if not passed %}
+            <a href="{% url 'game:take_quiz' mission.id %}" class="retry-btn">Try Again</a>
         {% endif %}
+        <a href="{% url 'game:mission_detail' mission.id %}" class="mission-btn">Back to Mission</a>
+        <a href="{% url 'game:dashboard' %}" class="dashboard-btn">Go to Dashboard</a>
     </div>
 </div>
 {% endblock %}

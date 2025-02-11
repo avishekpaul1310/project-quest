@@ -1,40 +1,36 @@
 {% extends 'game/base.html' %}
 
+{% block title %}Take Quiz - {{ mission.title }}{% endblock %}
+
 {% block content %}
 <div class="quiz-container">
-    <h2>{{ mission.title }}</h2>
+    <h1>{{ mission.title }} - Quiz</h1>
     
-    <div class="mission-content">
-        <h3>Key Concepts</h3>
-        <div class="key-concepts">
-            {{ mission.key_concepts|linebreaks }}
-        </div>
-        
-        <h3>Best Practices</h3>
-        <div class="best-practices">
-            {{ mission.best_practices|linebreaks }}
-        </div>
-    </div>
-
-    <form method="post" class="quiz-form">
+    <form method="post" action="{% url 'game:submit_quiz' mission.id %}" class="quiz-form">
         {% csrf_token %}
+        
         {% for question in questions %}
-        <div class="question">
-            <h4>Question {{ question.order }}: {{ question.text }}</h4>
-            {% for choice in question.choices.all %}
-            <div class="choice">
-                <input type="radio" 
-                       name="question_{{ question.id }}" 
-                       id="choice_{{ choice.id }}"
-                       value="{{ choice.id }}"
-                       required>
-                <label for="choice_{{ choice.id }}">{{ choice.text }}</label>
+        <div class="question-card">
+            <h3>Question {{ forloop.counter }}: {{ question.text }}</h3>
+            <div class="choices-container">
+                {% for choice in question.choices.all %}
+                <div class="choice-item">
+                    <input type="radio" 
+                           name="question_{{ question.id }}" 
+                           id="choice_{{ choice.id }}" 
+                           value="{{ choice.id }}" 
+                           required>
+                    <label for="choice_{{ choice.id }}">{{ choice.text }}</label>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
         {% endfor %}
         
-        <button type="submit" class="submit-button">Submit Answers</button>
+        <div class="submit-container">
+            <button type="submit" class="submit-btn">Submit Answers</button>
+            <a href="{% url 'game:mission_detail' mission.id %}" class="cancel-btn">Back to Mission</a>
+        </div>
     </form>
 </div>
 {% endblock %}
