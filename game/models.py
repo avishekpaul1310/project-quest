@@ -74,6 +74,11 @@ class PlayerProfile(models.Model):
             return True
         previous_mission = Mission.objects.filter(id=mission.id - 1).first()
         return previous_mission in self.completed_missions.all()
+    
+    def add_score(self, points):
+        """Add points to player's total score"""
+        self.total_score += points
+        self.save(update_fields=['total_score'])
 
 class PlayerAnswer(models.Model):
     player = models.ForeignKey(PlayerProfile, on_delete=models.CASCADE)

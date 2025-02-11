@@ -19,11 +19,21 @@ class SystemFunctionalityTests(TestCase):
         )
         self.client = Client()
         
-        # Create player profile
+        # Create player profile and ensure clean state
         self.profile = PlayerProfile.objects.get(user=self.user)
+        self.profile.total_score = 0
+        self.profile.completed_missions.clear()
+        self.profile.save()
         
         # Login the user
         self.client.login(username=self.username, password=self.password)
+
+    def tearDown(self):
+        # Clean up after tests
+        PlayerAnswer.objects.all().delete()
+        self.profile.completed_missions.clear()
+        self.profile.total_score = 0
+        self.profile.save()
 
     def test_complete_game_flow(self):
         """Test the entire game flow from start to finish"""

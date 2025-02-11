@@ -58,38 +58,37 @@ def submit_answer(request):
         return JsonResponse({'error': 'Missing required fields'}, status=400)
 
     try:
-        question = get_object_or_404(Question, id=question_id)
-        choice = get_object_or_404(Choice, id=choice_id, question=question)
-        profile = request.user.playerprofile
+        with transaction.atomic():
+            question = get_object_or_404(Question, id=question_id)
+            choice = get_object_or_404(Choice, id=choice_id, question=question)
+            profile = request.user.playerprofile
 
-        # Check if mission is accessible
-        if not profile.can_access_mission(question.mission):
-            return JsonResponse({'error': 'Mission not unlocked'}, status=403)
+            # Check if mission is accessible
+            if not profile.can_access_mission(question.mission):
+                return JsonResponse({'error': 'Mission not unlocked'}, status=403)
 
-        # Check if question was already answered
-        existing_answer = PlayerAnswer.objects.filter(
-            player=profile,
-            question=question
-        ).first()
+            # Check if question was already answered
+            existing_answer = PlayerAnswer.objects.filter(
+                player=profile,
+                question=question
+            ).first()
 
-        if existing_answer:
-            return JsonResponse({
-                'error': 'Question already answered',
-                'result': existing_answer.selected_choice.is_correct,
-                'explanation': existing_answer.selected_choice.explanation
-            })
+            if existing_answer:
+                return JsonResponse({
+                    'error': 'Question already answered',
+                    'result': existing_answer.selected_choice.is_correct,
+                    'explanation': existing_answer.selected_choice.explanation
+                })
 
-        # Record answer
-        player_answer = PlayerAnswer.objects.create(
-            player=profile,
-            question=question,
-            selected_choice=choice
-        )
+            # Record answer
+            player_answer = PlayerAnswer.objects.create(
+                player=profile,
+                question=question,
+                selected_choice=choice
+            )
 
-        # Update score if answer is correct
-        if choice.is_correct:
-            profile.total_score = profile.total_score + 10
-            profile.save(update_fields=['total_score'])
+            # Score update is handled by PlayerAnswer.save()
+            profile.refresh_from_db()
 
             # Check if mission is completed
             mission_questions = Question.objects.filter(mission=question.mission)
@@ -102,15 +101,16 @@ def submit_answer(request):
             if answered_correctly == mission_questions.count():
                 profile.completed_missions.add(question.mission)
 
-        return JsonResponse({
-            'result': choice.is_correct,
-            'explanation': choice.explanation,
-            'mission_completed': question.mission in profile.completed_missions.all(),
-            'current_score': profile.total_score
-        })
+            return JsonResponse({
+                'result': choice.is_correct,
+                'explanation': choice.explanation,
+                'mission_completed': question.mission in profile.completed_missions.all(),
+                'current_score': profile.total_score
+            })
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+        
 @login_required
 def player_progress(request):  # Changed from progress to player_progress
     """Get the player's current progress"""
