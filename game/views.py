@@ -59,44 +59,32 @@ def submit_quiz(request, mission_id):
     questions = mission.questions.all()
     user_profile = request.user.playerprofile
     
-    answers = []
     correct_count = 0
+    total_questions = questions.count()
     
     for question in questions:
         choice_id = request.POST.get(f'question_{question.id}')
-        if not choice_id:
-            messages.error(request, 'Please answer all questions!')
-            return redirect('game:take_quiz', mission_id=mission_id)
-        
-        choice = get_object_or_404(Choice, id=choice_id)
-        
-        # Save the answer
-        answer, _ = PlayerAnswer.objects.update_or_create(
-            player=user_profile,
-            question=question,
-            defaults={'selected_choice': choice}
-        )
-        
-        if choice.is_correct:
-            correct_count += 1
-        
-        answers.append(answer)
+        if choice_id:
+            choice = get_object_or_404(Choice, id=choice_id)
+            PlayerAnswer.objects.update_or_create(
+                player=user_profile,
+                question=question,
+                defaults={'selected_choice': choice}
+            )
+            if choice.is_correct:
+                correct_count += 1
 
-    score = (correct_count / len(questions)) * 100
-    passed = score >= 70
-
-    if passed:
-        user_profile.completed_missions.add(mission)
+    score = (correct_count / total_questions) * 100
+    
+    # Update total score only if mission wasn't completed before
+    if score >= 70 and mission not in user_profile.completed_missions.all():
         user_profile.total_score += int(score)
+        user_profile.completed_missions.add(mission)
         user_profile.save()
-    
-    # Store results in session for quiz_results view
-    request.session['quiz_results'] = {
-        'score': score,
-        'passed': passed,
-        'answers': [a.id for a in answers]
-    }
-    
+        messages.success(request, f'Congratulations! You passed with {score}%')
+    else:
+        messages.error(request, f'You need 70% to pass. Your score: {score}%')
+
     return redirect('game:quiz_results', mission_id=mission_id)
 
 @login_required

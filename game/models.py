@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.core.exceptions import ValidationError
 
 class Mission(models.Model):
     title = models.CharField(max_length=200)
@@ -34,12 +35,24 @@ class Question(models.Model):
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
-    text = models.TextField(help_text='The choice text')
-    is_correct = models.BooleanField(default=False, help_text='Whether this is the correct answer')
-    explanation = models.TextField(help_text='Explanation why this choice is correct/incorrect', blank=True)
+    text = models.TextField()
+    is_correct = models.BooleanField(default=False)
+    explanation = models.TextField()
 
-    def __str__(self):
-        return f"Choice for {self.question}"
+    def clean(self):
+        # Ensure only one correct answer per question
+        if self.is_correct:
+            existing_correct = Choice.objects.filter(
+                question=self.question,
+                is_correct=True
+            ).exclude(id=self.id)
+            
+            if existing_correct.exists():
+                raise ValidationError('Only one choice can be marked as correct')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 class PlayerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

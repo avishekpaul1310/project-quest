@@ -52,17 +52,15 @@ class QuizSetupTests(TestCase):
 
     def test_choice_correct_flag(self):
         """Test that only one choice can be marked as correct"""
-        new_correct = Choice.objects.create(
-            question=self.question,
-            text='Another correct answer',
-            is_correct=True
-        )
-        # Refresh from database to get updated values
-        self.correct_choice.refresh_from_db()
-        # Old correct choice should now be false
-        self.assertFalse(self.correct_choice.is_correct)
-        # New choice should be correct
-        self.assertTrue(new_correct.is_correct)
+        # First choice is already correct
+        from django.core.exceptions import ValidationError
+        with self.assertRaises(ValidationError):
+            choice2 = Choice.objects.create(
+                question=self.question,
+                text="Another correct answer",
+                is_correct=True,
+                explanation="This should raise an error"
+            )
 
 class QuizFunctionalTests(TestCase):
     def setUp(self):
