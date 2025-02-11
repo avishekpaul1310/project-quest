@@ -69,6 +69,64 @@ def take_quiz(request, mission_id):
         'questions': questions
     }
     return render(request, 'game/take_quiz.html', context)
+
+@login_required
+def submit_answer(request):
+    """
+    Handle submission of answers for questions.
+    Expects POST data with:
+    - question_id: ID of the question being answered
+    - choice_id: ID of the selected choice
+    Returns JSON with:
+    - result: boolean indicating if answer was correct
+    - explanation: explanation for the selected choice
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request method'}, status=400)
+    
+    question_id = request.POST.get('question_id')
+    choice_id = request.POST.get('choice_id')
+    
+    if not question_id or not choice_id:
+        return JsonResponse({'error': 'Missing required fields'}, status=400)
+        
+    try:
+        question = Question.objects.get(id=question_id)
+        choice = Choice.objects.get(id=choice_id, question=question)
+        user_profile = request.user.playerprofile
+        
+        # Create or update player answer
+        PlayerAnswer.objects.update_or_create(
+            player=user_profile,
+            question=question,
+            defaults={'selected_choice': choice}
+        )
+        
+        # If answer is correct and not previously answered correctly
+        if choice.is_correct and not user_profile.has_answered_correctly(question):
+            user_profile.total_score += 10  # Add 10 points for correct answer
+            user_profile.save()
+            
+            # Check if mission is completed
+            mission = question.mission
+            mission_questions = Question.objects.filter(mission=mission)
+            correct_answers = PlayerAnswer.objects.filter(
+                player=user_profile,
+                question__in=mission_questions,
+                selected_choice__is_correct=True
+            ).count()
+            
+            if correct_answers == mission_questions.count():
+                user_profile.completed_missions.add(mission)
+        
+        return JsonResponse({
+            'result': choice.is_correct,
+            'explanation': choice.explanation
+        })
+        
+    except (Question.DoesNotExist, Choice.DoesNotExist):
+        return JsonResponse({'error': 'Invalid question or choice'}, status=400)
+    
 @login_required
 def submit_quiz(request, mission_id):
     if request.method != 'POST':
