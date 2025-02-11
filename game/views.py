@@ -10,10 +10,11 @@ from django.http import JsonResponse
 def dashboard(request):
     """Display the user's dashboard with current progress"""
     profile = request.user.playerprofile
-    return JsonResponse({
-        'current_mission': profile.current_mission_id,
-        'total_score': profile.total_score,
-        'completed_missions': list(profile.completed_missions.values_list('id', flat=True))
+    missions = Mission.objects.all().order_by('order')
+    
+    return render(request, 'game/dashboard.html', {
+        'missions': missions,
+        'profile': profile,
     })
 
 @login_required
