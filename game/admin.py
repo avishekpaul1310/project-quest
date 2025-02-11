@@ -26,8 +26,8 @@ class PlayerProfileAdmin(admin.ModelAdmin):
 
 @admin.register(PlayerAnswer)
 class PlayerAnswerAdmin(admin.ModelAdmin):
-    list_display = ('player', 'question', 'get_is_correct', 'timestamp')
-    list_filter = ('question__mission', 'timestamp')
+    list_display = ('player', 'question', 'get_is_correct', 'get_answer_date')
+    list_filter = ('question__mission',)
     search_fields = ('player__user__username',)
 
     def get_is_correct(self, obj):
@@ -35,6 +35,12 @@ class PlayerAnswerAdmin(admin.ModelAdmin):
         return obj.is_correct
     get_is_correct.short_description = 'Correct?'
     get_is_correct.boolean = True
+
+    def get_answer_date(self, obj):
+        """Return the timestamp in a formatted way"""
+        return obj.timestamp
+    get_answer_date.short_description = 'Answered On'
+    get_answer_date.admin_order_field = 'timestamp'
 
 @admin.register(Choice)
 class ChoiceAdmin(admin.ModelAdmin):
