@@ -3,33 +3,51 @@
         "model": "game.mission",
         "pk": 1,
         "fields": {
-            "title": "Project Charter Basics",
+            "title": "Project Charter Fundamentals",
             "order": 1,
-            "key_concepts": "• Project charter defines project\n• Authorizes project formally\n• Defines project objectives and scope",
-            "best_practices": "• Align with business goals\n• Identify stakeholders early\n• Be clear and concise",
+            "key_concepts": "• Understanding project charters\n• Project authorization\n• Stakeholder identification\n• Scope definition\n• Project objectives",
+            "best_practices": "• Keep it concise\n• Get stakeholder approval\n• Define clear objectives\n• Include success criteria\n• Document assumptions",
             "is_active": true
         }
     },
     {
-        "model": "game.mission",
+        "model": "game.question",
+        "pk": 1,
+        "fields": {
+            "mission": 1,
+            "text": "What is the primary purpose of a project charter?",
+            "order": 1,
+            "explanation": "A project charter formally authorizes the project and provides the project manager with the authority to apply organizational resources."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 1,
+        "fields": {
+            "question": 1,
+            "text": "To formally authorize the project and assign resources",
+            "is_correct": true,
+            "explanation": "Correct! The project charter is the formal document that authorizes the project and assigns resources."
+        }
+    },
+    {
+        "model": "game.choice",
         "pk": 2,
         "fields": {
-            "title": "Stakeholder Engagement",
-            "order": 2,
-            "key_concepts": "• Identify all stakeholders\n• Analyze stakeholder interests\n• Plan engagement strategies",
-            "best_practices": "• Regular communication\n• Address concerns early\n• Document stakeholder requirements",
-            "is_active": true
+            "question": 1,
+            "text": "To create a detailed project schedule",
+            "is_correct": false,
+            "explanation": "Incorrect. Project schedules are created during project planning, not in the charter."
         }
     },
     {
-        "model": "game.mission",
+        "model": "game.choice",
         "pk": 3,
         "fields": {
-            "title": "Risk & Change Management",
-            "order": 3,
-            "key_concepts": "• Identify potential risks\n• Assess risk impact and probability\n• Plan risk responses\n• Manage change requests",
-            "best_practices": "• Regular risk reviews\n• Document all changes\n• Communicate changes to stakeholders\n• Update project plans accordingly",
-            "is_active": true
+            "question": 1,
+            "text": "To list all project deliverables",
+            "is_correct": false,
+            "explanation": "Incorrect. While the charter may include high-level deliverables, detailed deliverables are defined in the scope statement."
         }
     }
 ]
