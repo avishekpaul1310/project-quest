@@ -158,7 +158,3 @@ LOGGING = {
 
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
-# For fixture loading during tests
-FIXTURE_DIRS = [
-    os.path.join(BASE_DIR, 'game', 'fixtures'),
-]
