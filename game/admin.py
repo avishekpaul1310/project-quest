@@ -26,8 +26,8 @@ class PlayerProfileAdmin(admin.ModelAdmin):
 
 @admin.register(PlayerAnswer)
 class PlayerAnswerAdmin(admin.ModelAdmin):
-    list_display = ('player', 'question', 'get_is_correct', 'created_at', 'updated_at')
-    list_filter = ('question__mission', 'created_at')  # Remove is_correct from list_filter
+    list_display = ('player', 'question', 'get_is_correct', 'timestamp')
+    list_filter = ('question__mission', 'timestamp')
     search_fields = ('player__user__username',)
 
     def get_is_correct(self, obj):

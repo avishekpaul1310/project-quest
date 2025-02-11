@@ -84,10 +84,13 @@ class PlayerAnswer(models.Model):
     player = models.ForeignKey(PlayerProfile, on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     selected_choice = models.ForeignKey(Choice, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    # Rename timestamp to created_at and add updated_at
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ['player', 'question'] 
+
     def __str__(self):
         return f"{self.player.user.username}'s answer to {self.question}"
 
