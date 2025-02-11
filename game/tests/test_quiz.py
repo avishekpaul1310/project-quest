@@ -53,7 +53,6 @@ class QuizSetupTests(TestCase):
                 is_correct=True,
                 explanation="This should raise an error"
             )
-
 class QuizFunctionalTests(TestCase):
     def setUp(self):
         self.client = Client()
