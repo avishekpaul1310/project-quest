@@ -39,26 +39,22 @@ def available_missions(request):
 @login_required
 def mission_detail(request, mission_id):
     """Display mission details if user has access"""
-    try:
-        mission = get_object_or_404(Mission, id=mission_id)
-        user_profile = request.user.playerprofile
+    mission = get_object_or_404(Mission, id=mission_id)
+    user_profile = request.user.playerprofile
 
-        # Check if user can access this mission
-        if not user_profile.can_access_mission(mission):
-            return HttpResponseForbidden('Complete the previous mission first!')
+    # Check if user can access this mission
+    if not user_profile.can_access_mission(mission):
+        return HttpResponseForbidden('Complete the previous mission first!')
 
-        completed = mission in user_profile.completed_missions.all()
-        
-        context = {
-            'mission': mission,
-            'completed': completed,
-            'can_access': True,
-            'questions': mission.questions.all().order_by('order') if not completed else None
-        }
-        return render(request, 'game/mission_detail.html', context)
-    except Mission.DoesNotExist:
-        messages.error(request, 'Mission not found!')
-        return redirect('game:dashboard')
+    completed = mission in user_profile.completed_missions.all()
+    
+    context = {
+        'mission': mission,
+        'completed': completed,
+        'can_access': True,
+        'questions': mission.questions.all().order_by('order') if not completed else None
+    }
+    return render(request, 'game/mission_detail.html', context)
     
 @login_required
 def take_quiz(request, mission_id):
