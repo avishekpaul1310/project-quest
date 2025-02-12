@@ -4,37 +4,42 @@ from django.urls import reverse
 from game.models import Mission, Question, Choice, PlayerProfile, PlayerAnswer
 
 class QuizFunctionalTests(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         # Create test user
-        self.user = User.objects.create_user(
-            username='testuser',
+        cls.user = User.objects.create_user(
+            username='testuser_quiz',
             password='testpass123'
         )
-        self.client.login(username='testuser', password='testpass123')
-        self.profile = PlayerProfile.objects.get(user=self.user)
-
+        
         # Create test mission
-        self.mission = Mission.objects.create(
-            title='Test Mission',
-            description='Test Description',
+        cls.mission = Mission.objects.create(
+            title='Quiz Mission',
+            description='Quiz Description',
             order=1
         )
 
-        # Create test question
+    def setUp(self):
+        self.client.login(username='testuser_quiz', password='testpass123')
+        self.user.refresh_from_db()
+        self.profile = PlayerProfile.objects.get(user=self.user)
+        self.mission.refresh_from_db()
+        
+        # Create fresh question and choices for each test
         self.question = Question.objects.create(
             mission=self.mission,
             text='Test Question',
             order=1,
             explanation='Test Explanation'
         )
-
-        # Create choices
+        
         self.correct_choice = Choice.objects.create(
             question=self.question,
             text='Correct Answer',
             is_correct=True,
             explanation='This is correct'
         )
+        
         self.wrong_choices = []
         for i in range(2):
             choice = Choice.objects.create(
@@ -61,7 +66,7 @@ class QuizFunctionalTests(TestCase):
             {
                 'correct': True,
                 'explanation': self.correct_choice.explanation,
-                'score': 10  # Changed from 0 to 10 to match the points per question
+                'score': 10
             }
         )
 
@@ -82,7 +87,7 @@ class QuizFunctionalTests(TestCase):
             {
                 'correct': False,
                 'explanation': wrong_choice.explanation,
-                'score': self.profile.total_score
+                'score': 0
             }
         )
 
@@ -93,6 +98,7 @@ class QuizSetupTests(TestCase):
             description='Test Description',
             order=1
         )
+        
         self.question = Question.objects.create(
             mission=self.mission,
             text='Test Question',
@@ -127,3 +133,16 @@ class QuizSetupTests(TestCase):
         
         self.assertEqual(Choice.objects.filter(question=self.question).count(), 3)
         self.assertEqual(Choice.objects.filter(question=self.question, is_correct=True).count(), 1)
+
+    def test_get_next_question(self):
+        """Test getting the next question in sequence"""
+        # Create a second question
+        next_question = Question.objects.create(
+            mission=self.mission,
+            text='Next Question',
+            order=2,
+            explanation='Next Explanation'
+        )
+        
+        self.assertEqual(self.question.get_next_question(), next_question)
+        self.assertIsNone(next_question.get_next_question())

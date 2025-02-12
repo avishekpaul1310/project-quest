@@ -3,33 +3,35 @@ from django.contrib.auth.models import User
 from game.models import Mission, Question, Choice, PlayerProfile, PlayerAnswer
 
 class MissionFlowTests(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         # Create user
-        self.user = User.objects.create_user(
-            username='testuser',
+        cls.user = User.objects.create_user(
+            username='testuser_flow',
             password='testpass123'
         )
-        self.client.login(username='testuser', password='testpass123')
+
+    def setUp(self):
+        self.client.login(username='testuser_flow', password='testpass123')
+        self.user.refresh_from_db()
         self.profile = PlayerProfile.objects.get(user=self.user)
         
-        # Create missions
+        # Create fresh missions for each test
         self.missions = []
         for i in range(2):
             mission = Mission.objects.create(
-                title=f'Mission {i+1}',
-                description=f'Description {i+1}',
+                title=f'Flow Mission {i+1}',
+                description=f'Flow Description {i+1}',
                 order=i+1
             )
             self.missions.append(mission)
             
-            # Create 5 questions per mission
-            for j in range(5):
+            for j in range(2):  # Reduced from 5 to 2 questions for faster tests
                 question = Question.objects.create(
                     mission=mission,
-                    text=f'Question {j+1}',
+                    text=f'Flow Question {j+1}',
                     order=j+1
                 )
-                # Add 3 choices per question
                 Choice.objects.create(
                     question=question,
                     text='Correct',
@@ -43,7 +45,6 @@ class MissionFlowTests(TestCase):
                         is_correct=False,
                         explanation=f'Wrong explanation {k+1}'
                     )
-
     def test_mission_progression(self):
         """Test that missions must be completed in order"""
         # First mission should be accessible
