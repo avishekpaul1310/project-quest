@@ -77,26 +77,32 @@ class GameIntegrationTests(TestCase):
         """Test complete flow of mission progression"""
         self.client.login(username='testuser', password='testpass123')
         
-        for mission in self.missions:
-            # Verify mission access
+        for i, mission in enumerate(self.missions):
+            # Try to access mission
             response = self.client.get(reverse('game:mission_detail', args=[mission.id]))
             
-            if mission.order == 1:
+            if i == 0:
+                # First mission should be accessible
                 self.assertEqual(response.status_code, 200)
             else:
-                # Should be forbidden until previous mission is complete
+                # Other missions should be forbidden until previous is completed
                 self.assertEqual(response.status_code, 403)
                 
                 # Complete previous mission
-                self._complete_mission(self.missions[mission.order - 2])
+                prev_mission = self.missions[i-1]
+                self._complete_mission(prev_mission)
                 
-                # Now should have access
+                # Now should be able to access this mission
                 response = self.client.get(reverse('game:mission_detail', args=[mission.id]))
                 self.assertEqual(response.status_code, 200)
             
             # Complete current mission
             self._complete_mission(mission)
-
+            
+            # Verify mission completion
+            self.player_profile.refresh_from_db()
+            self.assertIn(mission, self.player_profile.completed_missions.all())
+        
     def test_quiz_submission_and_progress_update(self):
         """Test quiz submission flow and progress tracking"""
         self.client.login(username='testuser', password='testpass123')

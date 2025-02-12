@@ -86,15 +86,19 @@ class PlayerProfile(models.Model):
         if mission.order == 1:
             return True
         
-        # Get all previous missions
-        prev_missions = Mission.objects.filter(order__lt=mission.order).order_by('order')
+        # Get previous mission
+        prev_mission = Mission.objects.filter(order=mission.order - 1).first()
+        if not prev_mission:
+            return False
+        
+        # Must have completed the previous mission
+        return prev_mission in self.completed_missions.all()
     
-        # All previous missions must be completed
-        for prev_mission in prev_missions:
-            if prev_mission not in self.completed_missions.all():
-                return False
-            
-        return True
+    def _complete_mission(self, mission):
+        """Helper method to complete a mission"""
+        if mission not in self.completed_missions.all():
+            self.completed_missions.add(mission)
+            self.save()
 
     def get_mission_progress(self, mission):
         """Get progress for a specific mission"""
