@@ -8,8 +8,8 @@ from django.core.management import call_command
 @override_settings(TEST=True)
 class SystemFunctionalityTests(TestCase):
     def setUp(self):
-        # Load fixtures with correct file names
-        call_command('loaddata', 'mission.json', 'questions.json', 'choices.json', 'initial_data.json')
+        # Load only initial_data.json as it contains all necessary test data
+        call_command('loaddata', 'initial_data.json')
         
         # Create test user
         self.username = "testuser"
