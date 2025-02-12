@@ -142,9 +142,15 @@ class PlayerProfile(models.Model):
         ).exists()
 
     def update_score(self, points):
-        """Update the player's score and save"""
+        """Update the player's score and save immediately"""
         self.total_score += points
         self.save(update_fields=['total_score'])
+        return self.total_score
+
+    def get_current_score(self):
+        """Get the current score, ensuring fresh data"""
+        self.refresh_from_db(fields=['total_score'])
+        return self.total_score
 
     def complete_mission(self, mission):
         """Mark a mission as completed and save"""

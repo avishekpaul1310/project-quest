@@ -80,15 +80,6 @@ def take_quiz(request, mission_id):
 
 @login_required
 def submit_answer(request):
-    """
-    Handle submission of answers for questions.
-    Expects POST data with:
-    - question_id: ID of the question being answered
-    - choice_id: ID of the selected choice
-    Returns JSON with:
-    - result: boolean indicating if answer was correct
-    - explanation: explanation for the selected choice
-    """
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid request method'}, status=400)
     
@@ -101,38 +92,36 @@ def submit_answer(request):
     try:
         question = Question.objects.get(id=question_id)
         choice = Choice.objects.get(id=choice_id, question=question)
-        user_profile = request.user.playerprofile
+        profile = request.user.playerprofile
         
         # Create or update player answer
         player_answer, created = PlayerAnswer.objects.update_or_create(
-            player=user_profile,
+            player=profile,
             question=question,
             defaults={'selected_choice': choice}
         )
         
         # If answer is correct and not previously answered correctly
-        if choice.is_correct and created:
+        if choice.is_correct and (created or not player_answer.selected_choice.is_correct):
             # Update score
-            user_profile.update_score(10)
+            profile.update_score(10)
             
-            # Check if mission is completed
+            # Check mission completion
             mission = question.mission
-            mission_questions = Question.objects.filter(mission=mission)
-            total_questions = mission_questions.count()
             correct_answers = PlayerAnswer.objects.filter(
-                player=user_profile,
-                question__in=mission_questions,
+                player=profile,
+                question__mission=mission,
                 selected_choice__is_correct=True
             ).count()
             
-            # Complete mission if all questions are answered correctly
-            if correct_answers == total_questions:
-                user_profile.complete_mission(mission)
+            if correct_answers == Question.objects.filter(mission=mission).count():
+                profile.complete_mission(mission)
         
+        # Always return the current score in the response
         return JsonResponse({
             'result': choice.is_correct,
             'explanation': choice.explanation,
-            'score': user_profile.total_score
+            'score': profile.total_score  # Return the current score
         })
         
     except (Question.DoesNotExist, Choice.DoesNotExist):
