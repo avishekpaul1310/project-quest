@@ -110,14 +110,17 @@ def submit_answer(request):
             # Check if mission is completed
             mission = question.mission
             mission_questions = Question.objects.filter(mission=mission)
+            total_questions = mission_questions.count()
             correct_answers = PlayerAnswer.objects.filter(
                 player=user_profile,
                 question__in=mission_questions,
                 selected_choice__is_correct=True
             ).count()
             
-            # Add mission to completed missions if at least one question is answered correctly
-            user_profile.completed_missions.add(mission)
+            # Add mission to completed missions only if all questions are answered correctly
+            if correct_answers == total_questions:
+                user_profile.completed_missions.add(mission)
+                user_profile.save()
         
         return JsonResponse({
             'result': choice.is_correct,
@@ -126,7 +129,7 @@ def submit_answer(request):
         
     except (Question.DoesNotExist, Choice.DoesNotExist):
         return JsonResponse({'error': 'Invalid question or choice'}, status=400)
-    
+        
 @login_required
 def submit_quiz(request, mission_id):
     if request.method != 'POST':
