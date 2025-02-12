@@ -151,6 +151,16 @@ class PlayerProfile(models.Model):
         """Get the current score, ensuring fresh data"""
         self.refresh_from_db(fields=['total_score'])
         return self.total_score
+    
+    def has_completed_mission(self, mission):
+        """Check if all questions in mission are answered correctly"""
+        question_count = mission.questions.count()
+        correct_answers = PlayerAnswer.objects.filter(
+            player=self,
+            question__mission=mission,
+            selected_choice__is_correct=True
+        ).count()
+        return question_count == correct_answers
 
     def complete_mission(self, mission):
         """Mark a mission as completed and save"""

@@ -94,34 +94,29 @@ def submit_answer(request):
         choice = Choice.objects.get(id=choice_id, question=question)
         profile = request.user.playerprofile
         
-        # Create or update player answer
-        player_answer, created = PlayerAnswer.objects.update_or_create(
+        # Get or create player answer
+        player_answer, created = PlayerAnswer.objects.get_or_create(
             player=profile,
             question=question,
             defaults={'selected_choice': choice}
         )
         
-        # If answer is correct and not previously answered correctly
+        # Handle answer submission
         if choice.is_correct and (created or not player_answer.selected_choice.is_correct):
             # Update score
             profile.update_score(10)
+            profile.refresh_from_db()  # Ensure we have the latest score
             
-            # Check mission completion
+            # Check for mission completion
             mission = question.mission
-            correct_answers = PlayerAnswer.objects.filter(
-                player=profile,
-                question__mission=mission,
-                selected_choice__is_correct=True
-            ).count()
-            
-            if correct_answers == Question.objects.filter(mission=mission).count():
+            if profile.has_completed_mission(mission):
                 profile.complete_mission(mission)
         
-        # Always return the current score in the response
         return JsonResponse({
             'result': choice.is_correct,
             'explanation': choice.explanation,
-            'score': profile.total_score  # Return the current score
+            'score': profile.total_score,  # Use the refreshed score
+            'mission_complete': profile.has_completed_mission(mission)
         })
         
     except (Question.DoesNotExist, Choice.DoesNotExist):

@@ -66,24 +66,36 @@ class GameFlowTests(TestCase):
         print("\nTesting Question Answers:")
         
         questions = Question.objects.filter(mission=self.mission1).order_by('order')
+        expected_score = 0
         
-        for i, question in enumerate(questions, 1):
-            correct_choice = Choice.objects.get(question=question, is_correct=True)
-            
-            print(f"\nAnswering Question {i}:")
+        for question in questions:
+            print(f"\nAnswering Question {question.order}:")
             print(f"Question ID: {question.id}")
+            
+            # Get correct choice
+            correct_choice = Choice.objects.get(question=question, is_correct=True)
             print(f"Correct Choice ID: {correct_choice.id}")
             
+            # Submit answer
             response = self.client.post(reverse('game:submit_answer'), {
                 'question_id': question.id,
                 'choice_id': correct_choice.id
             })
+            response_data = response.json()
+            print(f"Response: {response_data}")
             
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            print(f"Response: {data}")
-            print(f"Current Score: {self.profile.total_score}")
-
+            # Update expected score
+            expected_score += 10
+            
+            # Refresh profile to get current score
+            self.profile.refresh_from_db()
+            actual_score = self.profile.total_score
+            print(f"Current Score: {actual_score}")
+            
+            # Verify scores match
+            self.assertEqual(actual_score, expected_score)
+            self.assertEqual(response_data['score'], expected_score)
+        
     def test_part4_mission_completion(self):
         """Test mission completion state after answering all questions"""
         print("\nTesting Mission Completion:")
