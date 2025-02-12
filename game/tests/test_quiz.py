@@ -10,8 +10,9 @@ class QuizSetupTests(TestCase):
     def setUp(self):
         self.mission = Mission.objects.create(
             title="Test Mission",
+            description="Test mission description",
             order=1,
-            description="Test mission description"  # Changed from key_concepts and best_practices
+            completion_points=10
         )
         
         self.question = Question.objects.create(
@@ -61,30 +62,48 @@ class QuizFunctionalTests(TestCase):
             username='testuser',
             password='testpass123'
         )
+        self.player_profile = PlayerProfile.objects.create(
+            user=self.user,
+            total_score=0
+        )
+        
         self.mission = Mission.objects.create(
             title="Test Mission",
+            description="Test mission description",
             order=1,
-            description="Test mission description"  # Changed from key_concepts and best_practices
+            completion_points=10
         )
-        self.question = Question.objects.create(
-            mission=self.mission,
-            text="Test question",
-            order=1,
-            explanation="Question explanation"
-        )
-        self.correct_choice = Choice.objects.create(
-            question=self.question,
-            text="Correct answer",
-            is_correct=True,
-            explanation="Correct choice explanation"
-        )
-        self.wrong_choice = Choice.objects.create(
-            question=self.question,
-            text="Wrong answer",
-            is_correct=False,
-            explanation="Wrong choice explanation"
-        )
-    
+        
+        # Create multiple questions for the mission
+        self.questions = []
+        self.correct_choices = []
+        self.wrong_choices = []
+        
+        for i in range(5):
+            question = Question.objects.create(
+                mission=self.mission,
+                text=f"Test question {i+1}",
+                order=i+1,
+                explanation=f"Question {i+1} explanation"
+            )
+            self.questions.append(question)
+            
+            correct = Choice.objects.create(
+                question=question,
+                text=f"Correct answer {i+1}",
+                is_correct=True,
+                explanation=f"Correct choice explanation {i+1}"
+            )
+            self.correct_choices.append(correct)
+            
+            wrong = Choice.objects.create(
+                question=question,
+                text=f"Wrong answer {i+1}",
+                is_correct=False,
+                explanation=f"Wrong choice explanation {i+1}"
+            )
+            self.wrong_choices.append(wrong)
+
     def test_quiz_submission_perfect_score(self):
         """Test quiz submission with all correct answers"""
         self.client.login(username='testuser', password='testpass123')
@@ -95,21 +114,20 @@ class QuizFunctionalTests(TestCase):
             for i, q in enumerate(self.questions)
         }
         
-        with transaction.atomic():
-            response = self.client.post(
-                reverse('game:take_quiz', args=[self.mission.id]),
-                data=data
-            )
-            
-            # Refresh player from database
-            player = User.objects.get(username='testuser').playerprofile
-            expected_score = len(self.questions) * 10
-            
-            # Verify score
-            self.assertEqual(player.total_score, expected_score)
-            
-            # Verify mission completion
-            self.assertTrue(self.mission in player.completed_missions.all())
+        response = self.client.post(
+            reverse('game:submit_quiz', args=[self.mission.id]),
+            data=data
+        )
+        
+        # Refresh player from database
+        self.player_profile.refresh_from_db()
+        expected_score = len(self.questions) * self.mission.completion_points
+        
+        # Verify score
+        self.assertEqual(self.player_profile.total_score, expected_score)
+        
+        # Verify mission completion
+        self.assertTrue(self.mission in self.player_profile.completed_missions.all())
 
     def test_quiz_submission_partial_score(self):
         """Test quiz submission with mixed correct/incorrect answers"""
@@ -124,17 +142,17 @@ class QuizFunctionalTests(TestCase):
             f'question_{self.questions[4].id}': self.correct_choices[4].id,  # correct
         }
         
-        with transaction.atomic():
-            response = self.client.post(
-                reverse('game:take_quiz', args=[self.mission.id]),
-                data=data
-            )
-            
-            # Refresh player from database
-            player = User.objects.get(username='testuser').playerprofile
-            
-            # Verify score (3 correct answers * 10 points)
-            self.assertEqual(player.total_score, 30)
-            
-            # Verify mission not completed (not all answers correct)
-            self.assertFalse(self.mission in player.completed_missions.all())
+        response = self.client.post(
+            reverse('game:submit_quiz', args=[self.mission.id]),
+            data=data
+        )
+        
+        # Refresh player from database
+        self.player_profile.refresh_from_db()
+        
+        # Verify score (3 correct answers * mission completion points)
+        expected_score = 3 * self.mission.completion_points
+        self.assertEqual(self.player_profile.total_score, expected_score)
+        
+        # Verify mission not completed (not all answers correct)
+        self.assertFalse(self.mission in self.player_profile.completed_missions.all())
