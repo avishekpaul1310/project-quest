@@ -3,30 +3,30 @@
         "model": "game.mission",
         "pk": 1,
         "fields": {
-            "title": "Project Initiation",
+            "title": "Mission 1: Getting Started",
             "order": 1,
-            "key_concepts": "Understanding project basics",
-            "best_practices": "Best practices for project initiation"
+            "key_concepts": "Basic programming concepts",
+            "best_practices": "Writing clean code"
         }
     },
     {
         "model": "game.mission",
         "pk": 2,
         "fields": {
-            "title": "Project Planning",
+            "title": "Mission 2: Advanced Concepts",
             "order": 2,
-            "key_concepts": "Project planning fundamentals",
-            "best_practices": "Best practices for project planning"
+            "key_concepts": "Advanced programming concepts",
+            "best_practices": "Code optimization"
         }
     },
     {
         "model": "game.mission",
         "pk": 3,
         "fields": {
-            "title": "Project Execution",
+            "title": "Mission 3: Final Challenge",
             "order": 3,
-            "key_concepts": "Project execution fundamentals",
-            "best_practices": "Best practices for project execution"
+            "key_concepts": "Complex programming concepts",
+            "best_practices": "Best practices in software development"
         }
     }
 ]

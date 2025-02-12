@@ -9,8 +9,7 @@ from django.core.management import call_command
 class SystemFunctionalityTests(TestCase):
     def setUp(self):
         # Load fixtures
-        call_command('loaddata', 'missions.json')
-        call_command('loaddata', 'questions.json')
+        call_command('loaddata', 'missions.json', 'questions.json', 'choices.json')
         
         # Create test user
         self.username = "testuser"

@@ -1,0 +1,42 @@
+[
+    {
+        "model": "game.choice",
+        "pk": 1,
+        "fields": {
+            "question": 1,
+            "text": "A container for storing data values",
+            "is_correct": true,
+            "explanation": "Correct! Variables are used to store data in programming."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 2,
+        "fields": {
+            "question": 1,
+            "text": "A type of loop",
+            "is_correct": false,
+            "explanation": "Incorrect. A variable is used for data storage, not looping."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 3,
+        "fields": {
+            "question": 2,
+            "text": "A block of reusable code",
+            "is_correct": true,
+            "explanation": "Correct! Functions are blocks of code that can be reused."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 4,
+        "fields": {
+            "question": 2,
+            "text": "A type of variable",
+            "is_correct": false,
+            "explanation": "Incorrect. Functions are blocks of code, not variables."
+        }
+    }
+]
