@@ -11,8 +11,7 @@ class QuizSetupTests(TestCase):
         self.mission = Mission.objects.create(
             title="Test Mission",
             order=1,
-            key_concepts="Test concepts",
-            best_practices="Test practices"
+            description="Test mission description"  # Changed from key_concepts and best_practices
         )
         
         self.question = Question.objects.create(
@@ -26,14 +25,14 @@ class QuizSetupTests(TestCase):
             question=self.question,
             text="Correct answer",
             is_correct=True,
-            explanation="This is why this answer is correct"  # Added explanation
+            explanation="This is why this answer is correct"
         )
         
         self.wrong_choice = Choice.objects.create(
             question=self.question,
             text="Wrong answer",
             is_correct=False,
-            explanation="This is why this answer is wrong"  # Added explanation
+            explanation="This is why this answer is wrong"
         )
 
     def test_question_creation(self):
@@ -65,8 +64,7 @@ class QuizFunctionalTests(TestCase):
         self.mission = Mission.objects.create(
             title="Test Mission",
             order=1,
-            key_concepts="Test concepts",
-            best_practices="Test practices"
+            description="Test mission description"  # Changed from key_concepts and best_practices
         )
         self.question = Question.objects.create(
             mission=self.mission,
@@ -78,13 +76,13 @@ class QuizFunctionalTests(TestCase):
             question=self.question,
             text="Correct answer",
             is_correct=True,
-            explanation="Correct choice explanation"  # Added explanation
+            explanation="Correct choice explanation"
         )
         self.wrong_choice = Choice.objects.create(
             question=self.question,
             text="Wrong answer",
             is_correct=False,
-            explanation="Wrong choice explanation"  # Added explanation
+            explanation="Wrong choice explanation"
         )
     
     def test_quiz_submission_perfect_score(self):
