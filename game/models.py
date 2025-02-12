@@ -6,60 +6,33 @@ from django.core.exceptions import ValidationError
 
 class Mission(models.Model):
     title = models.CharField(max_length=200)
-    description = models.TextField()
     order = models.IntegerField(unique=True)
+    description = models.TextField()  # Changed from best_practices
     
     class Meta:
         ordering = ['order']
 
     def __str__(self):
-        return self.title
+        return f"Mission {self.order}: {self.title}"
 
     def clean(self):
-        # Only validate questions if mission already exists and not being created
-        if self.pk:
+        # Only validate questions for existing missions
+        if not self._state.adding:
             question_count = self.questions.count()
-            if question_count > 0 and question_count != 5:
-                raise ValidationError('A mission must have exactly 5 questions.')
+            if question_count != 5:
+                raise ValidationError('Mission must have exactly 5 questions')
+            
+            # Validate correct answers
+            for question in self.questions.all():
+                if not question.choices.filter(is_correct=True).exists():
+                    raise ValidationError(f'Question "{question.text}" must have at least one correct answer')
 
     def save(self, *args, **kwargs):
-        # Skip validation during initial creation
-        if not self.pk:
-            return super().save(*args, **kwargs)
-        
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
-    def get_next_mission(self):
-        """Returns the next mission in order or None if this is the last mission"""
-        return Mission.objects.filter(order__gt=self.order).order_by('order').first()
-
-    def get_previous_mission(self):
-        """Returns the previous mission in order or None if this is the first mission"""
-        return Mission.objects.filter(order__lt=self.order).order_by('-order').first()
-
-    def is_first_mission(self):
-        """Returns True if this is the first mission"""
-        return not Mission.objects.filter(order__lt=self.order).exists()
-
-    def is_last_mission(self):
-        """Returns True if this is the last mission"""
-        return not Mission.objects.filter(order__gt=self.order).exists()
-
-    def get_completion_status(self, player_profile):
-        """Returns completion status for a given player"""
-        correct_answers = PlayerAnswer.objects.filter(
-            player=player_profile,
-            question__mission=self,
-            selected_choice__is_correct=True
-        ).count()
-        total_questions = self.questions.count()
-        return {
-            'completed': self in player_profile.completed_missions.all(),
-            'correct_answers': correct_answers,
-            'total_questions': total_questions,
-            'completion_percentage': (correct_answers / total_questions * 100) if total_questions > 0 else 0
-        }
+        creating = not self.pk
+        super().save(*args, **kwargs)
+        if not creating:
+            self.full_clean()
+    
 class Question(models.Model):
     mission = models.ForeignKey(Mission, on_delete=models.CASCADE, related_name='questions')
     text = models.TextField(help_text='The question text')

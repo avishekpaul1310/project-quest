@@ -81,47 +81,45 @@ def take_quiz(request, mission_id):
 @login_required
 def submit_answer(request):
     if request.method != 'POST':
-        return JsonResponse({'error': 'Invalid request method'}, status=400)
-    
+        return JsonResponse({'error': 'Invalid method'}, status=405)
+        
     question_id = request.POST.get('question_id')
     choice_id = request.POST.get('choice_id')
     
-    if not question_id or not choice_id:
+    if not all([question_id, choice_id]):
         return JsonResponse({'error': 'Missing required fields'}, status=400)
         
     try:
-        question = Question.objects.get(id=question_id)
+        question = Question.objects.select_related('mission').get(id=question_id)
         choice = Choice.objects.get(id=choice_id, question=question)
         profile = request.user.playerprofile
         
-        # Get or create player answer
-        player_answer, created = PlayerAnswer.objects.get_or_create(
+        # Record the answer
+        answer, created = PlayerAnswer.objects.update_or_create(
             player=profile,
             question=question,
             defaults={'selected_choice': choice}
         )
         
-        # Handle answer submission
-        if choice.is_correct and (created or not player_answer.selected_choice.is_correct):
-            # Update score
+        # Update score if correct and not previously answered correctly
+        if choice.is_correct and (created or not answer.selected_choice.is_correct):
             profile.update_score(10)
-            profile.refresh_from_db()  # Ensure we have the latest score
-            
-            # Check for mission completion
-            mission = question.mission
-            if profile.has_completed_mission(mission):
-                profile.complete_mission(mission)
+        
+        # Check mission completion
+        mission_complete = profile.has_completed_mission(question.mission)
+        if mission_complete:
+            profile.complete_mission(question.mission)
         
         return JsonResponse({
             'result': choice.is_correct,
             'explanation': choice.explanation,
-            'score': profile.total_score,  # Use the refreshed score
-            'mission_complete': profile.has_completed_mission(mission)
+            'score': profile.get_current_score(),
+            'mission_complete': mission_complete
         })
         
     except (Question.DoesNotExist, Choice.DoesNotExist):
         return JsonResponse({'error': 'Invalid question or choice'}, status=400)
-            
+                
 @login_required
 def submit_quiz(request, mission_id):
     if request.method != 'POST':
