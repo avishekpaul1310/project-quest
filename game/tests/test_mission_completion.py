@@ -1,145 +1,149 @@
 from django.test import TestCase, Client
-from django.urls import reverse
 from django.contrib.auth.models import User
+from django.urls import reverse
 from game.models import Mission, Question, Choice, PlayerProfile, PlayerAnswer
-from django.core.management import call_command
-from django.test.utils import override_settings
 
-@override_settings(TEST=True)
 class MissionCompletionTests(TestCase):
     def setUp(self):
-        # Load test data
-        call_command('loaddata', 'initial_data.json')
-        
-        # Create test user
-        self.user = User.objects.create_user(
-            username="testuser",
-            password="testpass123",
-            email="test@example.com"
-        )
+        # Create test user and get their profile
         self.client = Client()
-        self.client.login(username="testuser", password="testpass123")
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.player_profile = self.user.playerprofile
         
-        # Get player profile
-        self.profile = PlayerProfile.objects.get(user=self.user)
-        self.profile.total_score = 0
-        self.profile.completed_missions.clear()
-        self.profile.save()
-        
-        # Get mission and questions
-        self.mission = Mission.objects.get(id=1)
-        self.questions = Question.objects.filter(mission=self.mission).order_by('order')
+        # Create a sequence of missions
+        self.missions = []
+        for i in range(3):  # Create 3 missions
+            mission = Mission.objects.create(
+                title=f"Mission {i+1}",
+                description=f"Test mission {i+1}",
+                order=i+1
+            )
+            self.missions.append(mission)
+            
+            # Create 5 questions for each mission
+            for j in range(5):
+                question = Question.objects.create(
+                    mission=mission,
+                    text=f"Question {j+1} for Mission {i+1}",
+                    order=j+1,
+                    explanation=f"Explanation for question {j+1}"
+                )
+                
+                # Create one correct and one wrong choice
+                Choice.objects.create(
+                    question=question,
+                    text="Correct Answer",
+                    is_correct=True,
+                    explanation="This is correct"
+                )
+                Choice.objects.create(
+                    question=question,
+                    text="Wrong Answer",
+                    is_correct=False,
+                    explanation="This is wrong"
+                )
 
-    def test_answer_submission_creates_player_answer(self):
-        """Test that submitting an answer creates a PlayerAnswer record"""
-        question = self.questions.first()
-        correct_choice = Choice.objects.get(question=question, is_correct=True)
+    def test_mission_access_rules(self):
+        """Test that missions are properly locked/unlocked based on completion"""
+        self.client.login(username='testuser', password='testpass123')
         
-        response = self.client.post(reverse('game:submit_answer'), {
-            'question_id': question.id,
-            'choice_id': correct_choice.id
-        })
-        
+        # First mission should be accessible
+        response = self.client.get(reverse('game:mission_detail', args=[self.missions[0].id]))
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(PlayerAnswer.objects.filter(
-            player=self.profile,
-            question=question,
-            selected_choice=correct_choice
-        ).exists())
+        
+        # Second mission should be locked
+        response = self.client.get(reverse('game:mission_detail', args=[self.missions[1].id]))
+        self.assertEqual(response.status_code, 403)
+        
+        # Complete first mission
+        self._complete_mission(self.missions[0])
+        
+        # Now second mission should be accessible
+        response = self.client.get(reverse('game:mission_detail', args=[self.missions[1].id]))
+        self.assertEqual(response.status_code, 200)
 
-    def test_correct_answer_increases_score(self):
-        """Test that a correct answer increases the player's score"""
-        question = self.questions.first()
-        correct_choice = Choice.objects.get(question=question, is_correct=True)
+    def test_mission_completion_sequence(self):
+        """Test that missions must be completed in order"""
+        self.client.login(username='testuser', password='testpass123')
         
-        initial_score = self.profile.total_score
+        # Try to complete second mission without completing first
+        response = self._attempt_mission(self.missions[1])
+        self.assertEqual(response.status_code, 403)
         
-        response = self.client.post(reverse('game:submit_answer'), {
-            'question_id': question.id,
-            'choice_id': correct_choice.id
-        })
+        # Complete first mission
+        self._complete_mission(self.missions[0])
         
-        self.profile.refresh_from_db()
-        self.assertEqual(self.profile.total_score, initial_score + 10)
+        # Now completing second mission should work
+        response = self._attempt_mission(self.missions[1])
+        self.assertEqual(response.status_code, 200)
 
-    def test_incorrect_answer_doesnt_increase_score(self):
-        """Test that an incorrect answer doesn't increase the score"""
-        question = self.questions.first()
-        incorrect_choice = Choice.objects.filter(question=question, is_correct=False).first()
+    def test_mission_progress_tracking(self):
+        """Test that mission progress is tracked correctly"""
+        self.client.login(username='testuser', password='testpass123')
         
-        initial_score = self.profile.total_score
+        # Initially no missions completed
+        self.assertEqual(self.player_profile.completed_missions.count(), 0)
         
-        response = self.client.post(reverse('game:submit_answer'), {
-            'question_id': question.id,
-            'choice_id': incorrect_choice.id
-        })
+        # Complete first mission
+        self._complete_mission(self.missions[0])
+        self.assertEqual(self.player_profile.completed_missions.count(), 1)
         
-        self.profile.refresh_from_db()
-        self.assertEqual(self.profile.total_score, initial_score)
+        # Verify progress data structure
+        progress = self.player_profile.get_mission_progress(self.missions[0])
+        self.assertEqual(progress['total_questions'], 5)
+        self.assertEqual(progress['correct_answers'], 5)
+        self.assertTrue(progress['is_completed'])
 
-    def test_mission_completion_tracking(self):
-        """Test mission completion tracking logic"""
-        # Print initial state
-        print(f"\nInitial mission state:")
-        print(f"Total questions in mission: {self.questions.count()}")
-        print(f"Mission in completed missions: {self.mission in self.profile.completed_missions.all()}")
+    def test_mission_completion_requirements(self):
+        """Test that all questions must be answered correctly to complete a mission"""
+        self.client.login(username='testuser', password='testpass123')
         
-        # Answer all questions correctly
-        for question in self.questions:
-            correct_choice = Choice.objects.get(question=question, is_correct=True)
-            
-            # Print pre-submission state
-            print(f"\nBefore answering question {question.order}:")
-            print(f"Correct answers so far: {PlayerAnswer.objects.filter(player=self.profile, question__mission=self.mission, selected_choice__is_correct=True).count()}")
-            
-            response = self.client.post(reverse('game:submit_answer'), {
-                'question_id': question.id,
-                'choice_id': correct_choice.id
-            })
-            
-            # Print post-submission state
-            print(f"After answering question {question.order}:")
-            print(f"Response status: {response.status_code}")
-            print(f"Response data: {response.json()}")
-            print(f"Mission in completed missions: {self.mission in self.profile.completed_missions.all()}")
-            
-            self.assertEqual(response.status_code, 200)
-            self.assertTrue(response.json()['result'])
+        mission = self.missions[0]
+        questions = mission.questions.all()
+        
+        # Answer 4 out of 5 questions correctly
+        for question in questions[:4]:
+            correct_choice = question.choices.get(is_correct=True)
+            PlayerAnswer.objects.create(
+                player=self.player_profile,
+                question=question,
+                selected_choice=correct_choice
+            )
+        
+        # Answer last question incorrectly
+        wrong_choice = questions[4].choices.get(is_correct=False)
+        PlayerAnswer.objects.create(
+            player=self.player_profile,
+            question=questions[4],
+            selected_choice=wrong_choice
+        )
+        
+        # Mission should not be completed
+        self.assertFalse(self.player_profile.has_completed_mission(mission))
+        self.assertFalse(mission in self.player_profile.completed_missions.all())
 
-        # Verify final state
-        self.profile.refresh_from_db()
-        print(f"\nFinal state:")
-        print(f"Total score: {self.profile.total_score}")
-        print(f"Correct answers: {PlayerAnswer.objects.filter(player=self.profile, question__mission=self.mission, selected_choice__is_correct=True).count()}")
-        print(f"Mission in completed missions: {self.mission in self.profile.completed_missions.all()}")
-        
-        self.assertIn(self.mission, self.profile.completed_missions.all())
-        self.assertEqual(self.profile.total_score, 50)
+    def _complete_mission(self, mission):
+        """Helper method to complete a mission by answering all questions correctly"""
+        for question in mission.questions.all():
+            correct_choice = question.choices.get(is_correct=True)
+            PlayerAnswer.objects.create(
+                player=self.player_profile,
+                question=question,
+                selected_choice=correct_choice
+            )
+        self.player_profile.complete_mission(mission)
 
-    def test_partial_completion_state(self):
-        """Test that mission isn't marked complete with only some correct answers"""
-        # Answer only first 3 questions correctly
-        for question in self.questions[:3]:
-            correct_choice = Choice.objects.get(question=question, is_correct=True)
-            self.client.post(reverse('game:submit_answer'), {
-                'question_id': question.id,
-                'choice_id': correct_choice.id
-            })
+    def _attempt_mission(self, mission):
+        """Helper method to attempt completing a mission through the view"""
+        data = {}
+        for question in mission.questions.all():
+            correct_choice = question.choices.get(is_correct=True)
+            data[f'question_{question.id}'] = correct_choice.id
         
-        self.profile.refresh_from_db()
-        self.assertNotIn(self.mission, self.profile.completed_missions.all())
-        self.assertEqual(self.profile.total_score, 30)
-
-    def test_question_order_independence(self):
-        """Test that questions can be answered in any order"""
-        # Answer questions in reverse order
-        for question in reversed(list(self.questions)):
-            correct_choice = Choice.objects.get(question=question, is_correct=True)
-            self.client.post(reverse('game:submit_answer'), {
-                'question_id': question.id,
-                'choice_id': correct_choice.id
-            })
-        
-        self.profile.refresh_from_db()
-        self.assertIn(self.mission, self.profile.completed_missions.all())
-        self.assertEqual(self.profile.total_score, 50)
+        return self.client.post(
+            reverse('game:submit_quiz', args=[mission.id]),
+            data=data
+        )
