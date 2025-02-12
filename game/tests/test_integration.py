@@ -156,23 +156,29 @@ class GameIntegrationTests(TestCase):
         # Complete first mission
         self._complete_mission(self.missions[0])
         
-        # Attempt to submit answers for both second and third missions
-        for mission in self.missions[1:]:
-            data = {
-                f'question_{q.id}': q.choices.get(is_correct=True).id
-                for q in mission.questions.all()
-            }
-            response = self.client.post(
-                reverse('game:submit_quiz', args=[mission.id]),
-                data=data,
-                follow=True
-            )
-            
-            if mission.order == 2:
-                self.assertEqual(response.status_code, 200)  # Should succeed
-            else:
-                self.assertEqual(response.status_code, 403)  # Should fail
-
+        # Try to submit third mission before second (should fail)
+        data = {
+            f'question_{q.id}': q.choices.get(is_correct=True).id
+            for q in self.missions[2].questions.all()
+        }
+        response = self.client.post(
+            reverse('game:submit_quiz', args=[self.missions[2].id]),
+            data=data
+        )
+        self.assertEqual(response.status_code, 403)  # Should be forbidden
+        
+        # Submit second mission (should succeed)
+        data = {
+            f'question_{q.id}': q.choices.get(is_correct=True).id
+            for q in self.missions[1].questions.all()
+        }
+        response = self.client.post(
+            reverse('game:submit_quiz', args=[self.missions[1].id]),
+            data=data,
+            follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+    
     def _complete_mission(self, mission):
         """Helper method to complete a mission"""
         for question in mission.questions.all():

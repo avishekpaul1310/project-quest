@@ -85,13 +85,16 @@ class PlayerProfile(models.Model):
         """Check if user can access a mission"""
         if mission.order == 1:
             return True
+        
+        # Get all previous missions
+        prev_missions = Mission.objects.filter(order__lt=mission.order).order_by('order')
+    
+        # All previous missions must be completed
+        for prev_mission in prev_missions:
+            if prev_mission not in self.completed_missions.all():
+                return False
             
-        # Get previous mission
-        prev_mission = Mission.objects.filter(order=mission.order - 1).first()
-        if not prev_mission:
-            return False
-            
-        return prev_mission in self.completed_missions.all()
+        return True
 
     def get_mission_progress(self, mission):
         """Get progress for a specific mission"""

@@ -128,9 +128,13 @@ def submit_quiz(request, mission_id):
     mission = get_object_or_404(Mission, id=mission_id)
     user_profile = request.user.playerprofile
     
-    # Check access permission
+    # Check access permission - STRICT CHECK
     if not user_profile.can_access_mission(mission):
         return HttpResponseForbidden('Complete the previous mission first!')
+    
+    # Check if mission is already completed
+    if mission in user_profile.completed_missions.all():
+        return HttpResponseForbidden('Mission already completed!')
 
     questions = mission.questions.all()
     correct_count = 0
@@ -151,7 +155,7 @@ def submit_quiz(request, mission_id):
     score = (correct_count / total_questions) * 100
     
     # Update total score only if mission wasn't completed before
-    if score >= 70 and mission not in user_profile.completed_missions.all():
+    if score >= 70:
         user_profile.total_score += int(score)
         user_profile.completed_missions.add(mission)
         user_profile.save()
@@ -160,6 +164,7 @@ def submit_quiz(request, mission_id):
         messages.error(request, f'You need 70% to pass. Your score: {score}%')
 
     return redirect('game:quiz_results', mission_id=mission_id)
+
 @login_required
 def quiz_results(request, mission_id):
     mission = get_object_or_404(Mission, id=mission_id)
