@@ -1,15 +1,24 @@
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from game.models import Mission, Question, Choice, PlayerProfile
 
 class ViewTests(TestCase):
     def setUp(self):
+        # Create test client
+        self.client = Client()
+        
         # Create test user
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password='testpass123',
+            email='test@example.com'
         )
+        
+        # Create player profile (if not auto-created)
+        self.profile, created = PlayerProfile.objects.get_or_create(user=self.user)
+        
+        # Login the user
         self.client.login(username='testuser', password='testpass123')
         
         # Create test mission
@@ -23,7 +32,8 @@ class ViewTests(TestCase):
         self.question = Question.objects.create(
             mission=self.mission,
             text='Test Question',
-            order=1
+            order=1,
+            explanation='Test Explanation'
         )
         
         # Create choices
@@ -34,7 +44,7 @@ class ViewTests(TestCase):
             explanation='This is correct'
         )
         
-        Choice.objects.create(
+        self.wrong_choice = Choice.objects.create(
             question=self.question,
             text='Wrong Answer',
             is_correct=False,
@@ -42,31 +52,34 @@ class ViewTests(TestCase):
         )
 
     def test_dashboard_view(self):
-        response = self.client.get(reverse('game:dashboard'))
+        url = reverse('game:dashboard')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'game/dashboard.html')
 
     def test_mission_detail_view(self):
-        response = self.client.get(reverse('game:mission_detail', args=[self.mission.id]))
+        url = reverse('game:mission_detail', args=[self.mission.id])
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'game/mission_detail.html')
 
-    def test_quiz_results_view(self):
-        response = self.client.get(reverse('game:quiz_results', args=[self.mission.id]))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'game/quiz_results.html')
-
-    def test_submit_quiz_view(self):
-        response = self.client.post(
-            reverse('game:submit_answer'),
-            {
-                'question': self.question.id,
-                'choice': self.correct_choice.id
-            }
-        )
-        self.assertEqual(response.status_code, 200)
-
     def test_take_quiz_view(self):
-        response = self.client.get(reverse('game:take_quiz', args=[self.mission.id]))
+        url = reverse('game:take_quiz', args=[self.mission.id])
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'game/take_quiz.html')
+
+    def test_submit_quiz_view(self):
+        url = reverse('game:submit_answer')
+        data = {
+            'question': self.question.id,
+            'choice': self.correct_choice.id,
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 200)
+
+    def test_quiz_results_view(self):
+        url = reverse('game:quiz_results', args=[self.mission.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'game/quiz_results.html')
