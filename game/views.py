@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count
 from .models import Mission, Question, Choice, PlayerAnswer, PlayerProfile
+from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse, HttpResponseNotAllowed
 from django.conf import settings
 from django.http import HttpResponseForbidden
@@ -38,23 +39,17 @@ def available_missions(request):
 
 @login_required
 def mission_detail(request, mission_id):
-    """Display mission details if user has access"""
     mission = get_object_or_404(Mission, id=mission_id)
     user_profile = request.user.playerprofile
-
-    # Check if user can access this mission
-    if not user_profile.can_access_mission(mission):
-        return HttpResponseForbidden('Complete the previous mission first!')
-
-    completed = mission in user_profile.completed_missions.all()
     
-    context = {
+    if not user_profile.can_access_mission(mission):
+        return HttpResponseForbidden("You cannot access this mission yet")
+    
+    progress = user_profile.get_mission_progress(mission)
+    return render(request, 'game/mission_detail.html', {
         'mission': mission,
-        'completed': completed,
-        'can_access': True,
-        'questions': mission.questions.all().order_by('order') if not completed else None
-    }
-    return render(request, 'game/mission_detail.html', context)
+        'progress': progress
+    })
     
 @login_required
 def take_quiz(request, mission_id):
@@ -75,10 +70,8 @@ def take_quiz(request, mission_id):
     return render(request, 'game/take_quiz.html', context)
 
 @login_required
+@require_http_methods(["POST"])
 def submit_answer(request):
-    if request.method != 'POST':
-        return HttpResponseNotAllowed(['POST'])
-        
     question_id = request.POST.get('question')
     choice_id = request.POST.get('choice')
     
@@ -86,19 +79,14 @@ def submit_answer(request):
     choice = get_object_or_404(Choice, id=choice_id)
     profile = request.user.playerprofile
     
-    # Record/update the answer
-    answer, created = PlayerAnswer.objects.update_or_create(
+    answer, _ = PlayerAnswer.objects.update_or_create(
         player=profile,
         question=question,
         defaults={'selected_choice': choice}
     )
     
-    # Check if mission is complete after this answer
     mission = question.mission
-    progress = profile.get_mission_progress(mission)
-    
-    if progress['answered_questions'] == progress['total_questions']:
-        profile.complete_mission(mission)
+    profile.complete_mission(mission)
     
     return JsonResponse({
         'correct': choice.is_correct,
