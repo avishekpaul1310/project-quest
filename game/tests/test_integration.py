@@ -56,7 +56,7 @@ class GameIntegrationTests(TestCase):
     def test_user_registration_to_first_mission(self):
         """Test flow from user registration to accessing first mission"""
         # Register new user
-        response = self.client.post(reverse('register'), {
+        response = self.client.post(reverse('game:register'), {  # Changed from 'register' to 'game:register'
             'username': 'newuser',
             'email': 'newuser@example.com',
             'password1': 'testpass123',

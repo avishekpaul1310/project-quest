@@ -79,71 +79,29 @@ class Choice(models.Model):
 class PlayerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     total_score = models.IntegerField(default=0)
-    completed_missions = models.ManyToManyField('Mission')
-    
-    class Meta:
-        verbose_name = 'Player Profile'
-        verbose_name_plural = 'Player Profiles'
+    completed_missions = models.ManyToManyField(Mission, blank=True)
 
-    def __str__(self):
-        return f"{self.user.username}'s Profile"
-    
-    @property
-    def current_mission_id(self):
-        """Returns the ID of the current mission (first uncompleted)"""
-        completed_ids = self.completed_missions.values_list('id', flat=True)
-        next_mission = Mission.objects.exclude(id__in=completed_ids).order_by('order').first()
-        return next_mission.id if next_mission else None
-    
     def can_access_mission(self, mission):
-        """Check if user can access a specific mission"""
+        """Check if user can access a mission"""
         if mission.order == 1:
             return True
+            
+        # Get previous mission
         prev_mission = Mission.objects.filter(order=mission.order - 1).first()
-        return prev_mission in self.completed_missions.all() if prev_mission else False
-        
-    def has_answered_correctly(self, question):
-        """Check if user has already answered this question correctly"""
-        return PlayerAnswer.objects.filter(
-            player=self,
-            question=question,
-            selected_choice__is_correct=True
-        ).exists()
-
-    def update_score(self, points):
-        """Update the player's score and save immediately"""
-        self.total_score += points
-        self.save(update_fields=['total_score'])
-        return self.total_score
-
-    def get_current_score(self):
-        """Get the current score, ensuring fresh data"""
-        self.refresh_from_db(fields=['total_score'])
-        return self.total_score
-    
-    def has_completed_mission(self, mission):
-        """Check if all questions in mission are answered correctly"""
-        question_count = mission.questions.count()
-        correct_answers = PlayerAnswer.objects.filter(
-            player=self,
-            question__mission=mission,
-            selected_choice__is_correct=True
-        ).count()
-        return question_count == correct_answers
-
-    def complete_mission(self, mission):
-        """Mark a mission as completed and save"""
-        self.completed_missions.add(mission)
-        self.save()
+        if not prev_mission:
+            return False
+            
+        return prev_mission in self.completed_missions.all()
 
     def get_mission_progress(self, mission):
         """Get progress for a specific mission"""
-        total_questions = mission.questions.count()
-        correct_answers = PlayerAnswer.objects.filter(
+        answers = PlayerAnswer.objects.filter(
             player=self,
-            question__mission=mission,
-            selected_choice__is_correct=True
-        ).count()
+            question__mission=mission
+        )
+        total_questions = mission.questions.count()
+        correct_answers = answers.filter(selected_choice__is_correct=True).count()
+        
         return {
             'total_questions': total_questions,
             'correct_answers': correct_answers,

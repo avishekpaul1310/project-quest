@@ -45,10 +45,7 @@ def mission_detail(request, mission_id):
 
         # Check if user can access this mission
         if not user_profile.can_access_mission(mission):
-            if settings.TEST:  # Return 403 in test environment
-                return HttpResponseForbidden('Complete the previous mission first!')
-            messages.error(request, 'Complete the previous mission first!')
-            return redirect('game:dashboard')
+            return HttpResponseForbidden('Complete the previous mission first!')
 
         completed = mission in user_profile.completed_missions.all()
         
@@ -133,40 +130,25 @@ def submit_quiz(request, mission_id):
     
     # Check access permission
     if not user_profile.can_access_mission(mission):
-        if settings.TEST:  # Return 403 in test environment
-            return HttpResponseForbidden('Complete the previous mission first!')
-        messages.error(request, 'Complete the previous mission first!')
-        return redirect('game:dashboard')
+        return HttpResponseForbidden('Complete the previous mission first!')
 
     questions = mission.questions.all()
     correct_count = 0
     total_questions = questions.count()
     
-    # Store answer IDs for quiz results
-    answer_ids = []
-    
     for question in questions:
         choice_id = request.POST.get(f'question_{question.id}')
         if choice_id:
             choice = get_object_or_404(Choice, id=choice_id)
-            answer, _ = PlayerAnswer.objects.update_or_create(
+            PlayerAnswer.objects.update_or_create(
                 player=user_profile,
                 question=question,
                 defaults={'selected_choice': choice}
             )
-            answer_ids.append(answer.id)
             if choice.is_correct:
                 correct_count += 1
 
     score = (correct_count / total_questions) * 100
-    
-    # Store results in session for quiz_results view
-    if not settings.TEST:
-        request.session['quiz_results'] = {
-            'score': score,
-            'passed': score >= 70,
-            'answers': answer_ids
-        }
     
     # Update total score only if mission wasn't completed before
     if score >= 70 and mission not in user_profile.completed_missions.all():
@@ -178,7 +160,6 @@ def submit_quiz(request, mission_id):
         messages.error(request, f'You need 70% to pass. Your score: {score}%')
 
     return redirect('game:quiz_results', mission_id=mission_id)
-
 @login_required
 def quiz_results(request, mission_id):
     mission = get_object_or_404(Mission, id=mission_id)
