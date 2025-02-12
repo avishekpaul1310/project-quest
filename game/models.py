@@ -112,6 +112,13 @@ class PlayerProfile(models.Model):
     total_score = models.IntegerField(default=0)
     completed_missions = models.ManyToManyField('Mission')
     
+    class Meta:
+        verbose_name = 'Player Profile'
+        verbose_name_plural = 'Player Profiles'
+
+    def __str__(self):
+        return f"{self.user.username}'s Profile"
+    
     @property
     def current_mission_id(self):
         """Returns the ID of the current mission (first uncompleted)"""
@@ -133,6 +140,30 @@ class PlayerProfile(models.Model):
             question=question,
             selected_choice__is_correct=True
         ).exists()
+
+    def update_score(self, points):
+        """Update the player's score and save"""
+        self.total_score += points
+        self.save(update_fields=['total_score'])
+
+    def complete_mission(self, mission):
+        """Mark a mission as completed and save"""
+        self.completed_missions.add(mission)
+        self.save()
+
+    def get_mission_progress(self, mission):
+        """Get progress for a specific mission"""
+        total_questions = mission.questions.count()
+        correct_answers = PlayerAnswer.objects.filter(
+            player=self,
+            question__mission=mission,
+            selected_choice__is_correct=True
+        ).count()
+        return {
+            'total_questions': total_questions,
+            'correct_answers': correct_answers,
+            'is_completed': mission in self.completed_missions.all()
+        }
 
 class PlayerAnswer(models.Model):
     player = models.ForeignKey(PlayerProfile, on_delete=models.CASCADE)

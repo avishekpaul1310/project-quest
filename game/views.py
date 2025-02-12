@@ -96,16 +96,16 @@ def submit_answer(request):
         user_profile = request.user.playerprofile
         
         # Create or update player answer
-        PlayerAnswer.objects.update_or_create(
+        player_answer, created = PlayerAnswer.objects.update_or_create(
             player=user_profile,
             question=question,
             defaults={'selected_choice': choice}
         )
         
         # If answer is correct and not previously answered correctly
-        if choice.is_correct and not user_profile.has_answered_correctly(question):
-            user_profile.total_score += 10  # Add 10 points for correct answer
-            user_profile.save()
+        if choice.is_correct and created:
+            # Update score
+            user_profile.update_score(10)
             
             # Check if mission is completed
             mission = question.mission
@@ -117,19 +117,19 @@ def submit_answer(request):
                 selected_choice__is_correct=True
             ).count()
             
-            # Add mission to completed missions only if all questions are answered correctly
+            # Complete mission if all questions are answered correctly
             if correct_answers == total_questions:
-                user_profile.completed_missions.add(mission)
-                user_profile.save()
+                user_profile.complete_mission(mission)
         
         return JsonResponse({
             'result': choice.is_correct,
-            'explanation': choice.explanation
+            'explanation': choice.explanation,
+            'score': user_profile.total_score
         })
         
     except (Question.DoesNotExist, Choice.DoesNotExist):
         return JsonResponse({'error': 'Invalid question or choice'}, status=400)
-        
+            
 @login_required
 def submit_quiz(request, mission_id):
     if request.method != 'POST':
