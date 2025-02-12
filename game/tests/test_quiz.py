@@ -61,7 +61,7 @@ class QuizFunctionalTests(TestCase):
             {
                 'correct': True,
                 'explanation': self.correct_choice.explanation,
-                'score': self.profile.total_score
+                'score': 10  # Changed from 0 to 10 to match the points per question
             }
         )
 

@@ -70,7 +70,6 @@ def take_quiz(request, mission_id):
     return render(request, 'game/take_quiz.html', context)
 
 @login_required
-@require_http_methods(["POST"])
 def submit_answer(request):
     question_id = request.POST.get('question')
     choice_id = request.POST.get('choice')
@@ -79,14 +78,16 @@ def submit_answer(request):
     choice = get_object_or_404(Choice, id=choice_id)
     profile = request.user.playerprofile
     
-    answer, _ = PlayerAnswer.objects.update_or_create(
+    # Create or update the answer
+    answer, created = PlayerAnswer.objects.update_or_create(
         player=profile,
         question=question,
         defaults={'selected_choice': choice}
     )
     
-    mission = question.mission
-    profile.complete_mission(mission)
+    # Don't update score for existing answers
+    if created and choice.is_correct:
+        profile.update_score(10)  # Change from 50 to 10 for single question
     
     return JsonResponse({
         'correct': choice.is_correct,
