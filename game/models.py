@@ -6,39 +6,29 @@ from django.core.exceptions import ValidationError
 
 class Mission(models.Model):
     title = models.CharField(max_length=200)
+    description = models.TextField()
     order = models.IntegerField(unique=True)
-    key_concepts = models.TextField()
-    best_practices = models.TextField()
-
+    
     class Meta:
         ordering = ['order']
-        verbose_name = 'Mission'
-        verbose_name_plural = 'Missions'
 
     def __str__(self):
-        return f"Mission {self.order}: {self.title}"
+        return self.title
 
     def clean(self):
-        super().clean()
-        errors = {}
-        
-        # Check number of questions
-        question_count = self.questions.count()
-        if question_count != 5 and not self._state.adding:
-            errors['questions'] = 'Mission must have exactly 5 questions'
-        
-        # Check that each question has at least one correct answer
-        if not self._state.adding:
-            for question in self.questions.all():
-                if not question.choices.filter(is_correct=True).exists():
-                    errors['questions'] = f'Question "{question.text}" must have at least one correct answer'
-        
-        if errors:
-            raise ValidationError(errors)
+        # Only validate questions if mission already exists and not being created
+        if self.pk:
+            question_count = self.questions.count()
+            if question_count > 0 and question_count != 5:
+                raise ValidationError('A mission must have exactly 5 questions.')
 
     def save(self, *args, **kwargs):
+        # Skip validation during initial creation
+        if not self.pk:
+            return super().save(*args, **kwargs)
+        
         self.full_clean()
-        super().save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
     def get_next_mission(self):
         """Returns the next mission in order or None if this is the last mission"""
