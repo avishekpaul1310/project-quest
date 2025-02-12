@@ -1,8 +1,9 @@
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 from ..models import Mission, Question, Choice, PlayerProfile
 
+@override_settings(TEST=True)
 class ViewTests(TestCase):
     def setUp(self):
         # Create test user

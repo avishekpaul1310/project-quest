@@ -1,4 +1,4 @@
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.db import transaction
@@ -53,6 +53,8 @@ class QuizSetupTests(TestCase):
                 is_correct=True,
                 explanation="This should raise an error"
             )
+
+@override_settings(TEST=True)            
 class QuizFunctionalTests(TestCase):
     def setUp(self):
         self.client = Client()
