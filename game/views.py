@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count
 from .models import Mission, Question, Choice, PlayerAnswer, PlayerProfile
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseNotAllowed
 from django.conf import settings
 from django.http import HttpResponseForbidden
 
@@ -76,39 +76,35 @@ def take_quiz(request, mission_id):
 
 @login_required
 def submit_answer(request):
-    if request.method == 'POST':
-        question_id = request.POST.get('question')
-        choice_id = request.POST.get('choice')
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
         
-        question = get_object_or_404(Question, id=question_id)
-        choice = get_object_or_404(Choice, id=choice_id)
-        profile = request.user.playerprofile
-        
-        # Record answer
-        PlayerAnswer.objects.update_or_create(
-            player=profile,
-            question=question,
-            defaults={'selected_choice': choice}
-        )
-        
-        # Update score if correct
-        if choice.is_correct:
-            profile.update_score(10)
-        
-        # Check if mission is complete
-        all_answered = PlayerAnswer.objects.filter(
-            player=profile,
-            question__mission=question.mission
-        ).count() == question.mission.questions.count()
-        
-        if all_answered:
-            profile.complete_mission(question.mission)
-        
-        return JsonResponse({
-            'correct': choice.is_correct,
-            'explanation': choice.explanation,
-            'score': profile.total_score
-        })
+    question_id = request.POST.get('question')
+    choice_id = request.POST.get('choice')
+    
+    question = get_object_or_404(Question, id=question_id)
+    choice = get_object_or_404(Choice, id=choice_id)
+    profile = request.user.playerprofile
+    
+    # Record/update the answer
+    answer, created = PlayerAnswer.objects.update_or_create(
+        player=profile,
+        question=question,
+        defaults={'selected_choice': choice}
+    )
+    
+    # Check if mission is complete after this answer
+    mission = question.mission
+    progress = profile.get_mission_progress(mission)
+    
+    if progress['answered_questions'] == progress['total_questions']:
+        profile.complete_mission(mission)
+    
+    return JsonResponse({
+        'correct': choice.is_correct,
+        'explanation': choice.explanation,
+        'score': profile.total_score
+    })
                     
 @login_required
 def submit_quiz(request, mission_id):

@@ -6,11 +6,9 @@ from django.conf import settings
 
 class ViewTests(TestCase):
     def setUp(self):
-        # Create test user
         self.user = User.objects.create_user('testuser', 'test@example.com', 'testpass')
         self.client.login(username='testuser', password='testpass')
         
-        # Create mission with all required fields
         self.mission = Mission.objects.create(
             title="Test Mission",
             description="Test Description",
@@ -19,21 +17,35 @@ class ViewTests(TestCase):
             best_practices="Test practices"
         )
         
-        # Create questions with explanations
-        self.question = Question.objects.create(
-            mission=self.mission,
-            text="Test Question",
-            order=1,
-            explanation="Test explanation"
-        )
-        
-        # Create choices with explanations
-        self.choice = Choice.objects.create(
-            question=self.question,
-            text="Test Choice",
-            is_correct=True,
-            explanation="This is the correct answer"
-        )
+        self.questions = []
+        for i in range(5):
+            question = Question.objects.create(
+                mission=self.mission,
+                text=f"Question {i+1}",
+                order=i+1,
+                explanation=f"Explanation {i+1}"
+            )
+            self.questions.append(question)
+            
+            # Create three choices per question
+            Choice.objects.create(
+                question=question,
+                text="Correct Answer",
+                is_correct=True,
+                explanation="This is correct"
+            )
+            Choice.objects.create(
+                question=question,
+                text="Wrong Answer 1",
+                is_correct=False,
+                explanation="This is incorrect"
+            )
+            Choice.objects.create(
+                question=question,
+                text="Wrong Answer 2",
+                is_correct=False,
+                explanation="This is also incorrect"
+            )
 
     def complete_mission(self):
         """Helper method to complete a mission by answering all questions correctly"""

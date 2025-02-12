@@ -6,42 +6,37 @@ class PlayerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     total_score = models.IntegerField(default=0)
     completed_missions = models.ManyToManyField('Mission', blank=True, related_name='completed_by')
+    current_mission_id = models.IntegerField(default=1)  # Added missing field
     
     class Meta:
         ordering = ['-total_score']
-    
+
     def update_score(self, points):
-        """Update player's score"""
         self.total_score += points
         self.save()
     
+    def get_mission_progress(self, mission):
+        total_questions = mission.questions.count()
+        answered = PlayerAnswer.objects.filter(player=self, question__mission=mission)
+        correct = answered.filter(selected_choice__is_correct=True)
+        return {
+            'total_questions': total_questions,
+            'answered_questions': answered.count(),
+            'correct_answers': correct.count(),
+            'completed': self.has_completed_mission(mission)
+        }
+
     def complete_mission(self, mission):
-        """Complete a mission and update score"""
         if not self.has_completed_mission(mission):
-            correct_answers = PlayerAnswer.objects.filter(
-                player=self,
-                question__mission=mission,
-                selected_choice__is_correct=True
-            ).count()
-            total_questions = mission.questions.count()
-            score = (correct_answers / total_questions) * 100
-            if score >= 70:  # Pass threshold
+            progress = self.get_mission_progress(mission)
+            if progress['correct_answers'] >= progress['total_questions'] * 0.7:
                 self.completed_missions.add(mission)
-                self.update_score(int(score))
+                self.update_score(50)  # Fixed score value
+                self.current_mission_id = mission.order + 1
+                self.save()
                 return True
         return False
-
-    def has_completed_mission(self, mission):
-        """Check if user has completed a specific mission"""
-        return mission in self.completed_missions.all()
-
-    def can_access_mission(self, mission):
-        """Check if user can access a mission"""
-        if mission.order == 1:
-            return True
-        prev_mission = Mission.objects.filter(order=mission.order - 1).first()
-        return prev_mission and self.has_completed_mission(prev_mission)
-
+    
 class Mission(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -52,12 +47,8 @@ class Mission(models.Model):
     class Meta:
         ordering = ['order']
     
-    def clean(self):
-        if self.pk and self.questions.count() != 5:
-            raise ValidationError('Each mission must have exactly 5 questions.')
-    
     def __str__(self):
-        return self.title
+        return f"Mission {self.order}: {self.title}"  # Fixed string representation
 
 class Question(models.Model):
     mission = models.ForeignKey(Mission, related_name='questions', on_delete=models.CASCADE)
@@ -77,11 +68,15 @@ class Choice(models.Model):
     question = models.ForeignKey(Question, related_name='choices', on_delete=models.CASCADE)
     text = models.CharField(max_length=200)
     is_correct = models.BooleanField(default=False)
-    explanation = models.TextField()  # Required field for feedback
+    explanation = models.TextField()
+    
+    def clean(self):
+        if self.is_correct and self.question.choices.exclude(id=self.id).filter(is_correct=True).exists():
+            raise ValidationError('Only one choice can be correct per question')
+        super().clean()
     
     def save(self, *args, **kwargs):
-        if not self.explanation:
-            self.explanation = "Generic explanation for this choice."
+        self.full_clean()
         super().save(*args, **kwargs)
 
 class PlayerAnswer(models.Model):
