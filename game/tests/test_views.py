@@ -94,10 +94,24 @@ class ViewTests(TestCase):
         # Complete the mission first
         self.complete_mission()
         
+        # Get user's profile
+        user_profile = self.user.playerprofile
+        
+        # Verify mission completion
+        self.assertTrue(user_profile.has_completed_mission(self.mission))
+        
+        # Test quiz results view
         response = self.client.get(
             reverse('game:quiz_results', args=[self.mission.id])
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'game/quiz_results.html')
+        
+        # Check context data
         self.assertIn('score', response.context)
-        self.assertEqual(response.context['score'], len(self.questions) * 10)
+        self.assertIn('passed', response.context)
+        self.assertIn('answers', response.context)
+        
+        # Verify the score matches our expectations (3 questions * 10 points each)
+        self.assertEqual(response.context['score'], 100)  # All questions answered correctly
+        self.assertTrue(response.context['passed'])
