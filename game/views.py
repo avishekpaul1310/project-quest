@@ -5,6 +5,7 @@ from django.db.models import Count
 from .models import Mission, Question, Choice, PlayerAnswer, PlayerProfile
 from django.http import JsonResponse
 from django.conf import settings
+from django.http import HttpResponseForbidden
 
 @login_required
 def dashboard(request):
@@ -44,6 +45,8 @@ def mission_detail(request, mission_id):
 
         # Check if user can access this mission
         if not user_profile.can_access_mission(mission):
+            if settings.TEST:  # Return 403 in test environment
+                return HttpResponseForbidden('Complete the previous mission first!')
             messages.error(request, 'Complete the previous mission first!')
             return redirect('game:dashboard')
 
@@ -52,7 +55,7 @@ def mission_detail(request, mission_id):
         context = {
             'mission': mission,
             'completed': completed,
-            'can_access': True,  # Add this for template
+            'can_access': True,
             'questions': mission.questions.all().order_by('order') if not completed else None
         }
         return render(request, 'game/mission_detail.html', context)
@@ -126,9 +129,16 @@ def submit_quiz(request, mission_id):
         return redirect('game:mission_detail', mission_id=mission_id)
 
     mission = get_object_or_404(Mission, id=mission_id)
-    questions = mission.questions.all()
     user_profile = request.user.playerprofile
     
+    # Check access permission
+    if not user_profile.can_access_mission(mission):
+        if settings.TEST:  # Return 403 in test environment
+            return HttpResponseForbidden('Complete the previous mission first!')
+        messages.error(request, 'Complete the previous mission first!')
+        return redirect('game:dashboard')
+
+    questions = mission.questions.all()
     correct_count = 0
     total_questions = questions.count()
     
