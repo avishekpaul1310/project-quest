@@ -27,18 +27,21 @@ class ViewTests(TestCase):
             question = Question.objects.create(
                 mission=self.mission,
                 text=f"Test Question {i+1}",
-                order=i+1
+                order=i+1,
+                explanation=f"Explanation for question {i+1}"
             )
             # Create choices for each question
             correct_choice = Choice.objects.create(
                 question=question,
                 text=f"Correct Answer {i+1}",
-                is_correct=True
+                is_correct=True,
+                explanation=f"This is why answer {i+1} is correct"  # Added explanation
             )
             Choice.objects.create(
                 question=question,
                 text=f"Wrong Answer {i+1}",
-                is_correct=False
+                is_correct=False,
+                explanation=f"This is why answer {i+1} is wrong"  # Added explanation
             )
             self.questions.append(question)
 
@@ -64,7 +67,6 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'game/mission_detail.html')
         self.assertIn('mission', response.context)
-        # Check if description is present
         self.assertContains(response, self.mission.description)
 
     def test_take_quiz_view(self):
@@ -74,7 +76,6 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'game/take_quiz.html')
         self.assertIn('questions', response.context)
-        # Verify questions are present
         self.assertTrue(len(response.context['questions']) > 0)
 
     def test_submit_quiz_view(self):
@@ -99,5 +100,4 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'game/quiz_results.html')
         self.assertIn('score', response.context)
-        # Verify the score is correct (10 points per question)
         self.assertEqual(response.context['score'], len(self.questions) * 10)
