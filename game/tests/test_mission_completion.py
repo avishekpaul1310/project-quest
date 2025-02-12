@@ -76,9 +76,23 @@ class MissionCompletionTests(TestCase):
         # Complete first mission
         self._complete_mission(self.missions[0])
         
-        # Now completing second mission should work
-        response = self._attempt_mission(self.missions[1])
+        # After completing first mission, attempt second mission
+        response = self.client.post(
+            reverse('game:submit_quiz', args=[self.missions[1].id]),
+            data={
+                f'question_{q.id}': q.choices.get(is_correct=True).id
+                for q in self.missions[1].questions.all()
+            },
+            follow=True  # Follow the redirect
+        )
+        
+        # Check that we were redirected to the results page
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'game/quiz_results.html')
+        
+        # Verify mission completion
+        self.player_profile.refresh_from_db()
+        self.assertTrue(self.missions[1] in self.player_profile.completed_missions.all())
 
     def test_mission_progress_tracking(self):
         """Test that mission progress is tracked correctly"""

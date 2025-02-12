@@ -142,19 +142,31 @@ def submit_quiz(request, mission_id):
     correct_count = 0
     total_questions = questions.count()
     
+    # Store answer IDs for quiz results
+    answer_ids = []
+    
     for question in questions:
         choice_id = request.POST.get(f'question_{question.id}')
         if choice_id:
             choice = get_object_or_404(Choice, id=choice_id)
-            PlayerAnswer.objects.update_or_create(
+            answer, _ = PlayerAnswer.objects.update_or_create(
                 player=user_profile,
                 question=question,
                 defaults={'selected_choice': choice}
             )
+            answer_ids.append(answer.id)
             if choice.is_correct:
                 correct_count += 1
 
     score = (correct_count / total_questions) * 100
+    
+    # Store results in session for quiz_results view
+    if not settings.TEST:
+        request.session['quiz_results'] = {
+            'score': score,
+            'passed': score >= 70,
+            'answers': answer_ids
+        }
     
     # Update total score only if mission wasn't completed before
     if score >= 70 and mission not in user_profile.completed_missions.all():
