@@ -10,6 +10,14 @@ class Mission(models.Model):
     key_concepts = models.TextField()
     best_practices = models.TextField()
 
+    class Meta:
+        ordering = ['order']
+        verbose_name = 'Mission'
+        verbose_name_plural = 'Missions'
+
+    def __str__(self):
+        return f"Mission {self.order}: {self.title}"
+
     def clean(self):
         super().clean()
         errors = {}
@@ -32,6 +40,36 @@ class Mission(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    def get_next_mission(self):
+        """Returns the next mission in order or None if this is the last mission"""
+        return Mission.objects.filter(order__gt=self.order).order_by('order').first()
+
+    def get_previous_mission(self):
+        """Returns the previous mission in order or None if this is the first mission"""
+        return Mission.objects.filter(order__lt=self.order).order_by('-order').first()
+
+    def is_first_mission(self):
+        """Returns True if this is the first mission"""
+        return not Mission.objects.filter(order__lt=self.order).exists()
+
+    def is_last_mission(self):
+        """Returns True if this is the last mission"""
+        return not Mission.objects.filter(order__gt=self.order).exists()
+
+    def get_completion_status(self, player_profile):
+        """Returns completion status for a given player"""
+        correct_answers = PlayerAnswer.objects.filter(
+            player=player_profile,
+            question__mission=self,
+            selected_choice__is_correct=True
+        ).count()
+        total_questions = self.questions.count()
+        return {
+            'completed': self in player_profile.completed_missions.all(),
+            'correct_answers': correct_answers,
+            'total_questions': total_questions,
+            'completion_percentage': (correct_answers / total_questions * 100) if total_questions > 0 else 0
+        }
 class Question(models.Model):
     mission = models.ForeignKey(Mission, on_delete=models.CASCADE, related_name='questions')
     text = models.TextField(help_text='The question text')

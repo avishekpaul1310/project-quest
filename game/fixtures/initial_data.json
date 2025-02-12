@@ -20,6 +20,46 @@
         }
     },
     {
+        "model": "game.question",
+        "pk": 2,
+        "fields": {
+            "mission": 1,
+            "text": "Who typically approves the project charter?",
+            "order": 2,
+            "explanation": "The project sponsor or senior management typically approves the project charter."
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 3,
+        "fields": {
+            "mission": 1,
+            "text": "What should be included in project success criteria?",
+            "order": 3,
+            "explanation": "Success criteria should be specific, measurable, and aligned with business objectives."
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 4,
+        "fields": {
+            "mission": 1,
+            "text": "When should a project charter be created?",
+            "order": 4,
+            "explanation": "A project charter should be created at the beginning of the project, before detailed planning begins."
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 5,
+        "fields": {
+            "mission": 1,
+            "text": "What role does the project manager play in creating the charter?",
+            "order": 5,
+            "explanation": "The project manager typically assists in creating the charter but is not the one who authorizes it."
+        }
+    },
+    {
         "model": "game.choice",
         "pk": 1,
         "fields": {
@@ -47,6 +87,86 @@
             "text": "To list all project deliverables",
             "is_correct": false,
             "explanation": "Incorrect. While the charter may include high-level deliverables, detailed deliverables are defined in the scope statement."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 4,
+        "fields": {
+            "question": 2,
+            "text": "Project Sponsor",
+            "is_correct": true,
+            "explanation": "Correct! The project sponsor typically approves the project charter."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 5,
+        "fields": {
+            "question": 2,
+            "text": "Project Manager",
+            "is_correct": false,
+            "explanation": "Incorrect. The project manager helps create the charter but doesn't approve it."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 6,
+        "fields": {
+            "question": 3,
+            "text": "Measurable outcomes aligned with business objectives",
+            "is_correct": true,
+            "explanation": "Correct! Success criteria must be measurable and aligned with business goals."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 7,
+        "fields": {
+            "question": 3,
+            "text": "Detailed technical specifications",
+            "is_correct": false,
+            "explanation": "Incorrect. Technical specifications are part of project planning, not success criteria."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 8,
+        "fields": {
+            "question": 4,
+            "text": "At project initiation",
+            "is_correct": true,
+            "explanation": "Correct! The charter should be created during project initiation."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 9,
+        "fields": {
+            "question": 4,
+            "text": "During project execution",
+            "is_correct": false,
+            "explanation": "Incorrect. The charter needs to be in place before execution begins."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 10,
+        "fields": {
+            "question": 5,
+            "text": "Contributes to creation but doesn't authorize",
+            "is_correct": true,
+            "explanation": "Correct! The PM helps create the charter but doesn't authorize it."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 11,
+        "fields": {
+            "question": 5,
+            "text": "Has sole authority to approve",
+            "is_correct": false,
+            "explanation": "Incorrect. The project sponsor, not the PM, approves the charter."
         }
     }
 ]

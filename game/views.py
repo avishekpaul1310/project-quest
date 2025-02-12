@@ -116,8 +116,8 @@ def submit_answer(request):
                 selected_choice__is_correct=True
             ).count()
             
-            if correct_answers == mission_questions.count():
-                user_profile.completed_missions.add(mission)
+            # Add mission to completed missions if at least one question is answered correctly
+            user_profile.completed_missions.add(mission)
         
         return JsonResponse({
             'result': choice.is_correct,
