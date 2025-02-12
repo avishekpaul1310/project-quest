@@ -4,6 +4,7 @@
         "pk": 1,
         "fields": {
             "title": "Project Charter Fundamentals",
+            "description": "Learn the fundamentals of project charters and their importance in project management.",
             "order": 1,
             "key_concepts": "• Understanding project charters\n• Project authorization\n• Stakeholder identification\n• Scope definition\n• Project objectives",
             "best_practices": "• Keep it concise\n• Get stakeholder approval\n• Define clear objectives\n• Include success criteria\n• Document assumptions"
@@ -14,9 +15,21 @@
         "pk": 2,
         "fields": {
             "title": "Project Planning Basics",
+            "description": "Master the basics of project planning and organization.",
             "order": 2,
             "key_concepts": "• Project planning fundamentals\n• Work breakdown structure\n• Resource allocation\n• Timeline planning\n• Risk identification",
             "best_practices": "• Define clear milestones\n• Include all stakeholders\n• Consider constraints\n• Plan for risks\n• Document assumptions"
+        }
+    },
+    {
+        "model": "game.mission",
+        "pk": 3,
+        "fields": {
+            "title": "Stakeholder Management",
+            "description": "Understanding stakeholder management and communication strategies.",
+            "order": 3,
+            "key_concepts": "• Stakeholder identification\n• Power/Interest matrix\n• Communication planning\n• Engagement strategies\n• Influence mapping",
+            "best_practices": "• Regular updates\n• Clear communication channels\n• Stakeholder mapping\n• Engagement tracking\n• Feedback loops"
         }
     },
     {
@@ -70,6 +83,56 @@
         }
     },
     {
+        "model": "game.question",
+        "pk": 6,
+        "fields": {
+            "mission": 2,
+            "text": "What is a Work Breakdown Structure (WBS)?",
+            "order": 1,
+            "explanation": "A WBS is a hierarchical decomposition of the total scope of work to be carried out by the project team."
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 7,
+        "fields": {
+            "mission": 2,
+            "text": "How should project risks be prioritized?",
+            "order": 2,
+            "explanation": "Risks should be prioritized based on their probability of occurrence and potential impact on the project."
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 8,
+        "fields": {
+            "mission": 2,
+            "text": "What is resource leveling?",
+            "order": 3,
+            "explanation": "Resource leveling is a technique that adjusts the project schedule to optimize the allocation of resources."
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 9,
+        "fields": {
+            "mission": 2,
+            "text": "What is the critical path in project planning?",
+            "order": 4,
+            "explanation": "The critical path is the sequence of activities that determines the shortest possible project duration."
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 10,
+        "fields": {
+            "mission": 2,
+            "text": "What is the purpose of a project baseline?",
+            "order": 5,
+            "explanation": "A project baseline provides the approved starting point for measuring project performance and tracking changes."
+        }
+    },
+    {
         "model": "game.choice",
         "pk": 1,
         "fields": {
@@ -93,16 +156,6 @@
         "model": "game.choice",
         "pk": 3,
         "fields": {
-            "question": 1,
-            "text": "To list all project deliverables",
-            "is_correct": false,
-            "explanation": "Incorrect. While the charter may include high-level deliverables, detailed deliverables are defined in the scope statement."
-        }
-    },
-    {
-        "model": "game.choice",
-        "pk": 4,
-        "fields": {
             "question": 2,
             "text": "Project Sponsor",
             "is_correct": true,
@@ -111,7 +164,7 @@
     },
     {
         "model": "game.choice",
-        "pk": 5,
+        "pk": 4,
         "fields": {
             "question": 2,
             "text": "Project Manager",
@@ -121,7 +174,7 @@
     },
     {
         "model": "game.choice",
-        "pk": 6,
+        "pk": 5,
         "fields": {
             "question": 3,
             "text": "Measurable outcomes aligned with business objectives",
@@ -131,17 +184,17 @@
     },
     {
         "model": "game.choice",
-        "pk": 7,
+        "pk": 6,
         "fields": {
             "question": 3,
-            "text": "Detailed technical specifications",
+            "text": "Technical specifications",
             "is_correct": false,
             "explanation": "Incorrect. Technical specifications are part of project planning, not success criteria."
         }
     },
     {
         "model": "game.choice",
-        "pk": 8,
+        "pk": 7,
         "fields": {
             "question": 4,
             "text": "At project initiation",
@@ -151,7 +204,7 @@
     },
     {
         "model": "game.choice",
-        "pk": 9,
+        "pk": 8,
         "fields": {
             "question": 4,
             "text": "During project execution",
@@ -161,7 +214,7 @@
     },
     {
         "model": "game.choice",
-        "pk": 10,
+        "pk": 9,
         "fields": {
             "question": 5,
             "text": "Contributes to creation but doesn't authorize",
@@ -171,12 +224,112 @@
     },
     {
         "model": "game.choice",
-        "pk": 11,
+        "pk": 10,
         "fields": {
             "question": 5,
             "text": "Has sole authority to approve",
             "is_correct": false,
             "explanation": "Incorrect. The project sponsor, not the PM, approves the charter."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 11,
+        "fields": {
+            "question": 6,
+            "text": "A hierarchical breakdown of project work",
+            "is_correct": true,
+            "explanation": "Correct! A WBS breaks down the total project scope into manageable components."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 12,
+        "fields": {
+            "question": 6,
+            "text": "A project timeline",
+            "is_correct": false,
+            "explanation": "Incorrect. While related, a WBS is about scope breakdown, not time scheduling."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 13,
+        "fields": {
+            "question": 7,
+            "text": "Based on probability and impact",
+            "is_correct": true,
+            "explanation": "Correct! Risk priority is determined by both likelihood and potential impact."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 14,
+        "fields": {
+            "question": 7,
+            "text": "Only by their potential cost",
+            "is_correct": false,
+            "explanation": "Incorrect. Cost is just one factor; probability must also be considered."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 15,
+        "fields": {
+            "question": 8,
+            "text": "A technique to optimize resource allocation",
+            "is_correct": true,
+            "explanation": "Correct! Resource leveling helps balance resource usage across the project."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 16,
+        "fields": {
+            "question": 8,
+            "text": "Hiring more resources",
+            "is_correct": false,
+            "explanation": "Incorrect. Resource leveling works with existing resources, not adding new ones."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 17,
+        "fields": {
+            "question": 9,
+            "text": "The sequence determining project duration",
+            "is_correct": true,
+            "explanation": "Correct! The critical path shows the shortest possible completion time."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 18,
+        "fields": {
+            "question": 9,
+            "text": "The most expensive project tasks",
+            "is_correct": false,
+            "explanation": "Incorrect. The critical path is about time dependencies, not cost."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 19,
+        "fields": {
+            "question": 10,
+            "text": "To measure performance and track changes",
+            "is_correct": true,
+            "explanation": "Correct! The baseline is the reference point for measuring project progress."
+        }
+    },
+    {
+        "model": "game.choice",
+        "pk": 20,
+        "fields": {
+            "question": 10,
+            "text": "To list project requirements",
+            "is_correct": false,
+            "explanation": "Incorrect. Requirements are documented separately from the baseline."
         }
     }
 ]

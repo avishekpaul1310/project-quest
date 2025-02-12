@@ -7,44 +7,33 @@ from django.conf import settings
 class ViewTests(TestCase):
     def setUp(self):
         # Create test user
-        self.user = User.objects.create_user(
-            username="testuser",
-            password="testpass123",
-            email="test@example.com"
-        )
-        self.client = Client()
-        self.client.login(username="testuser", password="testpass123")
+        self.user = User.objects.create_user('testuser', 'test@example.com', 'testpass')
+        self.client.login(username='testuser', password='testpass')
         
-        # Create test mission
+        # Create mission with all required fields
         self.mission = Mission.objects.create(
             title="Test Mission",
-            description="Test mission description",
-            order=1
+            description="Test Description",
+            order=1,
+            key_concepts="Test concepts",
+            best_practices="Test practices"
         )
-
-        # Create test questions
-        self.questions = []
-        for i in range(3):  # Create 3 test questions
-            question = Question.objects.create(
-                mission=self.mission,
-                text=f"Test Question {i+1}",
-                order=i+1,
-                explanation=f"Explanation for question {i+1}"
-            )
-            # Create choices for each question
-            correct_choice = Choice.objects.create(
-                question=question,
-                text=f"Correct Answer {i+1}",
-                is_correct=True,
-                explanation=f"This is why answer {i+1} is correct"
-            )
-            Choice.objects.create(
-                question=question,
-                text=f"Wrong Answer {i+1}",
-                is_correct=False,
-                explanation=f"This is why answer {i+1} is wrong"
-            )
-            self.questions.append(question)
+        
+        # Create questions with explanations
+        self.question = Question.objects.create(
+            mission=self.mission,
+            text="Test Question",
+            order=1,
+            explanation="Test explanation"
+        )
+        
+        # Create choices with explanations
+        self.choice = Choice.objects.create(
+            question=self.question,
+            text="Test Choice",
+            is_correct=True,
+            explanation="This is the correct answer"
+        )
 
     def complete_mission(self):
         """Helper method to complete a mission by answering all questions correctly"""
@@ -101,16 +90,16 @@ class ViewTests(TestCase):
         self.assertTrue(len(response.context['questions']) > 0)
 
     def test_submit_quiz_view(self):
-        question = self.questions[0]
-        correct_choice = Choice.objects.get(question=question, is_correct=True)
         response = self.client.post(reverse('game:submit_answer'), {
-            'question_id': question.id,
-            'choice_id': correct_choice.id
+            'question': self.question.id,
+            'choice': self.choice.id
         })
         self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertTrue(data['result'])
-        self.assertEqual(data['score'], 10)
+        self.assertJSONEqual(response.content, {
+            'correct': True,
+            'explanation': self.choice.explanation,
+            'score': self.user.playerprofile.total_score
+        })
 
     def test_quiz_results_view(self):
         # Complete the mission first

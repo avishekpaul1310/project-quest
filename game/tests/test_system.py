@@ -8,29 +8,38 @@ from django.core.management import call_command
 @override_settings(TEST=True)
 class SystemFunctionalityTests(TestCase):
     def setUp(self):
-        super().setUp()
-        # Create additional missions
-        self.mission2 = Mission.objects.create(
-            title='Mission 2',
-            description='Second Mission',
-            order=2
-        )
-        self.mission3 = Mission.objects.create(
-            title='Mission 3',
-            description='Third Mission',
-            order=3
+        # Create user and profile
+        self.user = User.objects.create_user('testuser', 'test@example.com', 'testpass')
+        self.client.login(username='testuser', password='testpass')
+        
+        # Create mission
+        self.mission = Mission.objects.create(
+            title='Test Mission',
+            description='Test Description',
+            order=1,
+            key_concepts='Test concepts',
+            best_practices='Test practices'
         )
         
-        # Add questions to mission2
+        # Create questions with proper explanations
         for i in range(5):
             question = Question.objects.create(
-                mission=self.mission2,
-                text=f'M2 Question {i+1}',
+                mission=self.mission,
+                text=f'Question {i+1}',
                 order=i+1
             )
-            Choice.objects.create(question=question, text='Correct', is_correct=True)
-            Choice.objects.create(question=question, text='Wrong 1', is_correct=False)
-            Choice.objects.create(question=question, text='Wrong 2', is_correct=False)
+            Choice.objects.create(
+                question=question,
+                text='Correct',
+                is_correct=True,
+                explanation='This is the correct answer'
+            )
+            Choice.objects.create(
+                question=question,
+                text='Incorrect',
+                is_correct=False,
+                explanation='This is an incorrect answer'
+            )
 
     def tearDown(self):
         # Clean up after tests
