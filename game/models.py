@@ -11,6 +11,8 @@ class Mission(models.Model):
 
     class Meta:
         ordering = ['order']
+        verbose_name = 'Mission'
+        verbose_name_plural = 'Missions'
 
     def __str__(self):
         return f"Mission {self.order}: {self.title}"
@@ -30,7 +32,7 @@ class Mission(models.Model):
         super().save(*args, **kwargs)
         if not creating:
             self.full_clean()
-
+            
     def get_next_mission(self):
         return Mission.objects.filter(order__gt=self.order).order_by('order').first()
 
