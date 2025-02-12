@@ -10,6 +10,16 @@
         }
     },
     {
+        "model": "game.mission",
+        "pk": 2,
+        "fields": {
+            "title": "Project Planning Basics",
+            "order": 2,
+            "key_concepts": "• Project planning fundamentals\n• Work breakdown structure\n• Resource allocation\n• Timeline planning\n• Risk identification",
+            "best_practices": "• Define clear milestones\n• Include all stakeholders\n• Consider constraints\n• Plan for risks\n• Document assumptions"
+        }
+    },
+    {
         "model": "game.question",
         "pk": 1,
         "fields": {
