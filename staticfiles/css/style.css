@@ -295,23 +295,151 @@ body {
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
-    .nav-content {
+.nav-content {
         flex-direction: column;
         gap: 1rem;
     }
 
-    .nav-links {
+.nav-links {
         flex-direction: column;
         width: 100%;
     }
 
-    .missions-grid {
+.missions-grid {
         grid-template-columns: 1fr;
     }
 
-    .score-circle {
+.score-circle {
         width: 120px;
         height: 120px;
         font-size: 1.5rem;
     }
+
+    /* Mission Detail Styles */
+.mission-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.mission-content {
+    background-color: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    overflow: hidden;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.mission-description {
+    padding: 2rem;
+}
+
+.mission-description h2 {
+    color: var(--text-color);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+}
+
+.content-box {
+    background-color: var(--background-color);
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    line-height: 1.6;
+}
+
+.action-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.completion-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.completion-badge {
+    background-color: var(--secondary-color);
+    color: var(--white);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+/* Update existing button styles to include new classes */
+.start-quiz-btn, .retry-btn, .back-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.start-quiz-btn {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+.start-quiz-btn:hover {
+    background-color: #1976D2;
+}
+
+.back-btn {
+    background-color: var(--text-light);
+    color: var(--white);
+}
+
+.back-btn:hover {
+    background-color: #555;
+}
+
+/* Update responsive styles */
+@media (max-width: 768px) {
+    .mission-container {
+        margin: 1rem auto;
+    }
+
+    .mission-description {
+        padding: 1rem;
+    }
+
+    .content-box {
+        padding: 1rem;
+    }
+}
+
+/* Add animation if not already present */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Print styles */
+@media print {
+.action-container {
+        display: none;
+    }
+
+.mission-content {
+        box-shadow: none;
+    }
+
+.content-box {
+        border: 1px solid #ddd;
+    }
+}
 }
