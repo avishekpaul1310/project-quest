@@ -7,8 +7,8 @@ from django.core.exceptions import ValidationError
 class Mission(models.Model):
     title = models.CharField(max_length=200)
     order = models.IntegerField(unique=True)
-    description = models.TextField()  # Changed from best_practices
-    
+    description = models.TextField()
+
     class Meta:
         ordering = ['order']
 
@@ -16,13 +16,11 @@ class Mission(models.Model):
         return f"Mission {self.order}: {self.title}"
 
     def clean(self):
-        # Only validate questions for existing missions
         if not self._state.adding:
             question_count = self.questions.count()
             if question_count != 5:
                 raise ValidationError('Mission must have exactly 5 questions')
             
-            # Validate correct answers
             for question in self.questions.all():
                 if not question.choices.filter(is_correct=True).exists():
                     raise ValidationError(f'Question "{question.text}" must have at least one correct answer')
@@ -32,6 +30,12 @@ class Mission(models.Model):
         super().save(*args, **kwargs)
         if not creating:
             self.full_clean()
+
+    def get_next_mission(self):
+        return Mission.objects.filter(order__gt=self.order).order_by('order').first()
+
+    def get_previous_mission(self):
+        return Mission.objects.filter(order__lt=self.order).order_by('-order').first()
     
 class Question(models.Model):
     mission = models.ForeignKey(Mission, on_delete=models.CASCADE, related_name='questions')

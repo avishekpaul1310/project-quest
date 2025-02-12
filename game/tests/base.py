@@ -16,7 +16,7 @@ class GameTestBase(TestCase):
         # Create mission without validation
         self.mission = Mission.objects.create(
             title='Test Mission',
-            description='Test Description',
+            description='Test Mission Description',
             order=1
         )
         
