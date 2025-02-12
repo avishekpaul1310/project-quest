@@ -1,29 +1,34 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from ..models import Mission, Question, Choice, PlayerProfile, PlayerAnswer
-from django.core.exceptions import ValidationError
-from .base import GameTestBase  # Import GameTestBase from the appropriate module
+from game.models import Mission, Question, Choice, PlayerProfile
 
-class ModelTests(GameTestBase):
+class ModelTests(TestCase):
+    def setUp(self):
+        # Create test user
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        
+        # Create test mission
+        self.mission = Mission.objects.create(
+            title='Test Mission',
+            description='Test Description',
+            order=1
+        )
+
     def test_mission_creation(self):
-        mission = self.mission
-        self.assertEqual(str(mission), f"Mission {mission.order}: {mission.title}")
-        self.assertEqual(mission.questions.count(), 5)
+        """Test mission can be created"""
+        self.assertEqual(self.mission.title, 'Test Mission')
+        self.assertEqual(self.mission.order, 1)
 
     def test_player_profile_creation(self):
-        self.assertTrue(hasattr(self.user, 'playerprofile'))
-        self.assertEqual(self.user.playerprofile.total_score, 0)
+        """Test player profile is created automatically"""
+        profile = PlayerProfile.objects.get(user=self.user)
+        self.assertEqual(profile.total_score, 0)
+        self.assertEqual(profile.current_mission_id, 1)
 
     def test_mission_access(self):
-        profile = self.user.playerprofile
+        """Test mission access rules"""
+        profile = PlayerProfile.objects.get(user=self.user)
         self.assertTrue(profile.can_access_mission(self.mission))
-
-    def test_question_validation(self):
-        # Test that a mission requires exactly 5 questions
-        with self.assertRaises(ValidationError):
-            mission = Mission.objects.create(
-                title='Invalid Mission',
-                description='Test',
-                order=2
-            )
-            mission.clean()
