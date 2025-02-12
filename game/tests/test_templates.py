@@ -13,8 +13,7 @@ class TemplateTests(TestCase):
         self.mission = Mission.objects.create(
             title="Test Mission",
             order=1,
-            key_concepts="Test concepts",
-            best_practices="Test practices"
+            description="Test mission description"  # Updated to use description field
         )
 
     def test_base_template(self):
@@ -41,5 +40,4 @@ class TemplateTests(TestCase):
         )
         
         self.assertContains(response, self.mission.title)
-        self.assertContains(response, 'Key Concepts')
-        self.assertContains(response, 'Best Practices')
+        self.assertContains(response, self.mission.description)

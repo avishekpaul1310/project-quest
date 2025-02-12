@@ -7,17 +7,10 @@
     <h1>{{ mission.title }}</h1>
     
     <div class="mission-content">
-        <section class="key-concepts">
-            <h2>Key Concepts</h2>
+        <section class="mission-description">
+            <h2>Mission Description</h2>
             <div class="content-box">
-                {{ mission.key_concepts|linebreaks }}
-            </div>
-        </section>
-        
-        <section class="best-practices">
-            <h2>Best Practices</h2>
-            <div class="content-box">
-                {{ mission.best_practices|linebreaks }}
+                {{ mission.description|linebreaks }}
             </div>
         </section>
     </div>
