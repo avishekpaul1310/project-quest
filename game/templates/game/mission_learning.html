@@ -1,0 +1,68 @@
+{% extends 'game/base.html' %}
+
+{% block title %}{{ mission.story_title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="medieval-scroll">
+        <!-- Mission Header -->
+        <div class="mission-header text-center mb-4">
+            <h1 class="medieval-title">{{ mission.story_title }}</h1>
+            <p class="mission-type">{{ mission.get_mission_type_display }}</p>
+            <p class="pmbok-reference">📚 {{ mission.pmbok_chapter }}</p>
+        </div>
+
+        <!-- Mission Description -->
+        <div class="story-context mb-4">
+            <h3 class="medieval-title">📖 The Challenge</h3>
+            {{ mission.description|linebreaks }}
+        </div>
+
+        <!-- Learning Content -->
+        <div class="learning-section mb-4">
+            <h3 class="medieval-title">🏰 Key Concepts</h3>
+            <div class="key-concepts">
+                {{ mission.key_concepts|safe }}
+            </div>
+        </div>
+
+        <!-- Best Practices -->
+        <div class="best-practices-section mb-4">
+            <h3 class="medieval-title">💡 Best Practices</h3>
+            <div class="practices-content">
+                {{ mission.best_practices|safe }}
+            </div>
+        </div>
+
+        <!-- NPC Dialogue -->
+        <div class="npc-dialogue mb-4">
+            <div class="dialogue-box">
+                <h3 class="medieval-title">🗣️ Royal Message</h3>
+                {{ mission.npc_dialogue|linebreaks }}
+            </div>
+        </div>
+
+        <!-- Mission Objective -->
+        <div class="objective-section mb-4">
+            <h3 class="medieval-title">🎯 Your Mission</h3>
+            <div class="objective-content">
+                {{ mission.objective|linebreaks }}
+            </div>
+            <div class="mission-meta">
+                <p><strong>📋 Key Concepts:</strong> {{ mission.pm_concepts }}</p>
+                <p><strong>🏆 Reward:</strong> {{ mission.xp_reward }} XP</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="text-center mt-4">
+            <a href="{% url 'game:dashboard' %}" class="btn btn-secondary medieval-btn me-2">
+                Return to Castle
+            </a>
+            <a href="{% url 'game:take_quiz' mission.id %}" class="btn btn-primary medieval-btn">
+                Begin Your Quest
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
