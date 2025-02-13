@@ -3,28 +3,40 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Welcome to Project Quest</h1>
-<p class="lead mb-4">Complete missions to test your project management knowledge!</p>
-
-<div class="row">
-    {% for status in mission_status %}
-        <div class="col-md-6">
-            <div class="mission-card {% if status.completed %}completed{% endif %}">
-                <h3>{{ status.mission.title }}</h3>
-                <p>{{ status.mission.description }}</p>
-                
-                {% if status.completed %}
-                    <div class="alert alert-success">
-                        Score: {{ status.score }} points
-                    </div>
-                    <a href="{% url 'game:quiz_results' status.mission.id %}" 
-                       class="btn btn-success">View Results</a>
-                {% else %}
-                    <a href="{% url 'game:take_quiz' status.mission.id %}" 
-                       class="btn btn-primary">Start Mission</a>
-                {% endif %}
-            </div>
-        </div>
-    {% endfor %}
+<div class="welcome-message">
+    <h1>Welcome to Project Quest</h1>
+    <p class="lead">Master project management concepts through interactive missions!</p>
 </div>
+
+{% if missions %}
+    <div class="row">
+        {% for mission in missions %}
+            <div class="col-md-6">
+                <div class="mission-card {% if mission.completed %}completed{% endif %}">
+                    <h3>{{ mission.title }}</h3>
+                    <p>{{ mission.description }}</p>
+                    
+                    {% if mission.completed %}
+                        <div class="alert alert-success">
+                            Completed with score: {{ mission.score }} points
+                        </div>
+                        <a href="{% url 'game:quiz_results' mission.id %}" 
+                           class="btn btn-success">View Results</a>
+                    {% else %}
+                        <a href="{% url 'game:take_quiz' mission.id %}" 
+                           class="btn btn-primary">Start Mission</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        <h4>No Missions Available</h4>
+        <p>Please wait while our instructors prepare new missions for you!</p>
+        {% if user.is_superuser %}
+            <p>As an admin, you can <a href="{% url 'admin:index' %}">create new missions</a> in the admin interface.</p>
+        {% endif %}
+    </div>
+{% endif %}
 {% endblock %}

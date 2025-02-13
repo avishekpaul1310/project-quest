@@ -6,19 +6,24 @@ from .models import Mission, Question, UserMissionProgress
 @login_required
 def dashboard(request):
     missions = Mission.objects.filter(is_active=True)
-    user_progress = UserMissionProgress.objects.filter(user=request.user)
+    mission_data = []
     
-    mission_status = []
     for mission in missions:
-        progress = user_progress.filter(mission=mission).first()
-        mission_status.append({
-            'mission': mission,
+        progress = UserMissionProgress.objects.filter(
+            user=request.user,
+            mission=mission
+        ).first()
+        
+        mission_data.append({
+            'title': mission.title,
+            'description': mission.description,
+            'id': mission.id,
             'completed': progress.completed if progress else False,
             'score': progress.score if progress else 0
         })
     
     return render(request, 'game/dashboard.html', {
-        'mission_status': mission_status
+        'missions': mission_data
     })
 
 @login_required
@@ -41,7 +46,8 @@ def take_quiz(request, mission_id):
         progress.completed = True
         progress.save()
         
-        return redirect('game:quiz_results', mission_id=mission_id)
+        messages.success(request, f'Quiz completed! You scored {score} points!')
+        return redirect('game:dashboard')
     
     return render(request, 'game/take_quiz.html', {
         'mission': mission,
