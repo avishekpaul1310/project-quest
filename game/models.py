@@ -29,7 +29,8 @@ class Question(models.Model):
     option_d = models.CharField(max_length=255)
     correct_option = models.CharField(
         max_length=1,
-        choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')]
+        choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')],
+        default='A'  # Adding default value
     )
 
     def __str__(self):
