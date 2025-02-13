@@ -1,36 +1,44 @@
 {% extends 'game/base.html' %}
 
-{% block title %}Take Quiz - {{ mission.title }}{% endblock %}
+{% block title %}{{ mission.title }} - Quiz{% endblock %}
 
 {% block content %}
-<div class="quiz-container">
-    <h1>{{ mission.title }} - Quiz</h1>
-    
-    <form method="post" action="{% url 'game:submit_quiz' mission.id %}" class="quiz-form">
-        {% csrf_token %}
-        
-        {% for question in questions %}
+<h2 class="mb-4">{{ mission.title }}</h2>
+<p class="lead mb-4">{{ mission.description }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    {% for question in questions %}
         <div class="question-card">
-            <h3>Question {{ forloop.counter }}: {{ question.text }}</h3>
-            <div class="choices-container">
-                {% for choice in question.choices.all %}
-                <div class="choice-item">
-                    <input type="radio" 
-                           name="question_{{ question.id }}" 
-                           id="choice_{{ choice.id }}" 
-                           value="{{ choice.id }}" 
-                           required>
-                    <label for="choice_{{ choice.id }}">{{ choice.text }}</label>
+            <h4>{{ forloop.counter }}. {{ question.text }}</h4>
+            <div class="options">
+                <div class="form-check">
+                    <input type="radio" name="question_{{ question.id }}" value="A" 
+                           class="form-check-input" required>
+                    <label class="form-check-label">{{ question.option_a }}</label>
                 </div>
-                {% endfor %}
+                <div class="form-check">
+                    <input type="radio" name="question_{{ question.id }}" value="B" 
+                           class="form-check-input">
+                    <label class="form-check-label">{{ question.option_b }}</label>
+                </div>
+                <div class="form-check">
+                    <input type="radio" name="question_{{ question.id }}" value="C" 
+                           class="form-check-input">
+                    <label class="form-check-label">{{ question.option_c }}</label>
+                </div>
+                <div class="form-check">
+                    <input type="radio" name="question_{{ question.id }}" value="D" 
+                           class="form-check-input">
+                    <label class="form-check-label">{{ question.option_d }}</label>
+                </div>
             </div>
         </div>
-        {% endfor %}
-        
-        <div class="submit-container">
-            <button type="submit" class="submit-btn">Submit Answers</button>
-            <a href="{% url 'game:mission_detail' mission.id %}" class="cancel-btn">Back to Mission</a>
-        </div>
-    </form>
-</div>
+    {% endfor %}
+
+    <div class="mt-4 mb-4">
+        <button type="submit" class="btn btn-primary">Submit Answers</button>
+        <a href="{% url 'game:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</form>
 {% endblock %}

@@ -1,230 +1,63 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Count
-from .models import Mission, Question, Choice, PlayerAnswer, PlayerProfile
-from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse, HttpResponseNotAllowed
-from django.conf import settings
-from django.http import HttpResponseForbidden
+from .models import Mission, Question, UserMissionProgress
 
 @login_required
 def dashboard(request):
-    missions = Mission.objects.all().order_by('order')
-    user_profile = request.user.playerprofile
+    missions = Mission.objects.filter(is_active=True)
+    user_progress = UserMissionProgress.objects.filter(user=request.user)
     
-    context = {
-        'missions': missions,
-        'user_profile': user_profile,
-        'completed_missions': user_profile.completed_missions.all()
-    }
-    return render(request, 'game/dashboard.html', context)
-
-@login_required
-def available_missions(request):
-    missions = Mission.objects.all().order_by('order')
-    user_profile = request.user.playerprofile
-    
-    mission_data = []
+    mission_status = []
     for mission in missions:
-        mission_data.append({
-            'id': mission.id,
-            'title': mission.title,
-            'order': mission.order,
-            'unlocked': user_profile.can_access_mission(mission),
-            'completed': mission in user_profile.completed_missions.all()
+        progress = user_progress.filter(mission=mission).first()
+        mission_status.append({
+            'mission': mission,
+            'completed': progress.completed if progress else False,
+            'score': progress.score if progress else 0
         })
     
-    return JsonResponse({'missions': mission_data})
-
-@login_required
-def mission_detail(request, mission_id):
-    mission = get_object_or_404(Mission, id=mission_id)
-    user_profile = request.user.playerprofile
-    
-    if not user_profile.can_access_mission(mission):
-        return HttpResponseForbidden("You cannot access this mission yet")
-    
-    progress = user_profile.get_mission_progress(mission)
-    return render(request, 'game/mission_detail.html', {
-        'mission': mission,
-        'progress': progress
+    return render(request, 'game/dashboard.html', {
+        'mission_status': mission_status
     })
-    
+
 @login_required
 def take_quiz(request, mission_id):
-    mission = get_object_or_404(Mission, id=mission_id)
-    user_profile = request.user.playerprofile
-
-    # Don't redirect in test environment
-    if not settings.TEST and not user_profile.can_access_mission(mission):
-        messages.error(request, 'Complete the previous mission first!')
-        return redirect('game:dashboard')
-
-    questions = mission.questions.all().order_by('order')
+    mission = get_object_or_404(Mission, pk=mission_id)
+    questions = mission.questions.all()
     
-    context = {
+    if request.method == 'POST':
+        score = 0
+        for question in questions:
+            answer = request.POST.get(f'question_{question.id}')
+            if answer == question.correct_option:
+                score += 10
+        
+        progress, created = UserMissionProgress.objects.get_or_create(
+            user=request.user,
+            mission=mission
+        )
+        progress.score = score
+        progress.completed = True
+        progress.save()
+        
+        return redirect('game:quiz_results', mission_id=mission_id)
+    
+    return render(request, 'game/take_quiz.html', {
         'mission': mission,
         'questions': questions
-    }
-    return render(request, 'game/take_quiz.html', context)
-
-@login_required
-def submit_answer(request):
-    question_id = request.POST.get('question')
-    choice_id = request.POST.get('choice')
-    
-    question = get_object_or_404(Question, id=question_id)
-    choice = get_object_or_404(Choice, id=choice_id)
-    profile = request.user.playerprofile
-    
-    # Create or update the answer
-    answer, created = PlayerAnswer.objects.update_or_create(
-        player=profile,
-        question=question,
-        defaults={'selected_choice': choice}
-    )
-    
-    # Don't update score for existing answers
-    if created and choice.is_correct:
-        profile.update_score(10)  # Change from 50 to 10 for single question
-    
-    return JsonResponse({
-        'correct': choice.is_correct,
-        'explanation': choice.explanation,
-        'score': profile.total_score
     })
-                    
-@login_required
-def submit_quiz(request, mission_id):
-    if request.method != 'POST':
-        return redirect('game:mission_detail', mission_id=mission_id)
-
-    mission = get_object_or_404(Mission, id=mission_id)
-    user_profile = request.user.playerprofile
-    
-    # Check access permission - STRICT CHECK
-    if not user_profile.can_access_mission(mission):
-        return HttpResponseForbidden('Complete the previous mission first!')
-    
-    # Check if mission is already completed
-    if mission in user_profile.completed_missions.all():
-        return HttpResponseForbidden('Mission already completed!')
-
-    questions = mission.questions.all()
-    correct_count = 0
-    total_questions = questions.count()
-    
-    for question in questions:
-        choice_id = request.POST.get(f'question_{question.id}')
-        if choice_id:
-            choice = get_object_or_404(Choice, id=choice_id)
-            PlayerAnswer.objects.update_or_create(
-                player=user_profile,
-                question=question,
-                defaults={'selected_choice': choice}
-            )
-            if choice.is_correct:
-                correct_count += 1
-
-    score = (correct_count / total_questions) * 100
-    
-    # Update total score only if mission wasn't completed before
-    if score >= 70:
-        user_profile.total_score += int(score)
-        user_profile.completed_missions.add(mission)
-        user_profile.save()
-        messages.success(request, f'Congratulations! You passed with {score}%')
-    else:
-        messages.error(request, f'You need 70% to pass. Your score: {score}%')
-
-    return redirect('game:quiz_results', mission_id=mission_id)
 
 @login_required
 def quiz_results(request, mission_id):
-    mission = get_object_or_404(Mission, id=mission_id)
-    
-    # Special handling for test environment
-    if settings.TEST:
-        user_profile = request.user.playerprofile
-        answers = PlayerAnswer.objects.filter(
-            player=user_profile,
-            question__mission=mission
-        ).select_related('question', 'selected_choice')
-        
-        correct_answers = answers.filter(selected_choice__is_correct=True).count()
-        total_questions = mission.questions.count()
-        score = (correct_answers / total_questions * 100) if total_questions > 0 else 0
-        
-        context = {
-            'mission': mission,
-            'score': score,
-            'passed': score >= 70,
-            'answers': answers
-        }
-        return render(request, 'game/quiz_results.html', context)
-    
-    # Normal handling for non-test environment
-    results = request.session.get('quiz_results')
-    if not results:
-        messages.error(request, 'No quiz results found.')
-        return redirect('game:mission_detail', mission_id=mission_id)
-    
-    answers = PlayerAnswer.objects.filter(
-        id__in=results.get('answers', [])
-    ).select_related('question', 'selected_choice')
-    
-    context = {
-        'mission': mission,
-        'score': results.get('score', 0),
-        'passed': results.get('passed', False),
-        'answers': answers
-    }
-    
-    del request.session['quiz_results']
-    return render(request, 'game/quiz_results.html', context)
-
-@login_required
-def mission_results(request, mission_id):
-    mission = get_object_or_404(Mission, id=mission_id)
-    user_profile = request.user.playerprofile
-    
-    total_questions = mission.questions.count()
-    answers = PlayerAnswer.objects.filter(
-        player=user_profile,
-        question__mission=mission
+    mission = get_object_or_404(Mission, pk=mission_id)
+    progress = get_object_or_404(
+        UserMissionProgress,
+        user=request.user,
+        mission=mission
     )
-    questions_answered = answers.count()
-    correct_answers = answers.filter(selected_choice__is_correct=True).count()
     
-    if questions_answered > 0:
-        current_score = (correct_answers / questions_answered) * 100
-    else:
-        current_score = 0
-    
-    mission_complete = mission in user_profile.completed_missions.all()
-    
-    context = {
+    return render(request, 'game/quiz_results.html', {
         'mission': mission,
-        'questions_answered': questions_answered,
-        'total_questions': total_questions,
-        'current_score': current_score,
-        'mission_complete': mission_complete
-    }
-    return render(request, 'game/mission_results.html', context)
-
-@login_required
-def player_progress(request):
-    user_profile = request.user.playerprofile
-    completed_missions = user_profile.completed_missions.all()
-    total_missions = Mission.objects.count()
-    
-    completion_percentage = (completed_missions.count() / total_missions * 100) if total_missions > 0 else 0
-    
-    context = {
-        'completed_missions': completed_missions,
-        'total_missions': total_missions,
-        'completion_percentage': completion_percentage,
-        'total_score': user_profile.total_score
-    }
-    return render(request, 'game/player_progress.html', context)
+        'score': progress.score
+    })

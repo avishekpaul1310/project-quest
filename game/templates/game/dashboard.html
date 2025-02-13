@@ -3,36 +3,28 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
-    <h1>Project Management Missions</h1>
-    
-    <div class="missions-grid">
-        {% for mission in missions %}
-        <div class="mission-card {% if mission in user.playerprofile.completed_missions.all %}completed{% endif %}
-                               {% if not user.playerprofile.can_access_mission %}locked{% endif %}">
-            <div class="mission-header">
-                <span class="mission-number">{{ mission.order }}</span>
-                <h2>{{ mission.title }}</h2>
+<h1 class="mb-4">Welcome to Project Quest</h1>
+<p class="lead mb-4">Complete missions to test your project management knowledge!</p>
+
+<div class="row">
+    {% for status in mission_status %}
+        <div class="col-md-6">
+            <div class="mission-card {% if status.completed %}completed{% endif %}">
+                <h3>{{ status.mission.title }}</h3>
+                <p>{{ status.mission.description }}</p>
+                
+                {% if status.completed %}
+                    <div class="alert alert-success">
+                        Score: {{ status.score }} points
+                    </div>
+                    <a href="{% url 'game:quiz_results' status.mission.id %}" 
+                       class="btn btn-success">View Results</a>
+                {% else %}
+                    <a href="{% url 'game:take_quiz' status.mission.id %}" 
+                       class="btn btn-primary">Start Mission</a>
+                {% endif %}
             </div>
-            
-            {% if mission in user.playerprofile.completed_missions.all %}
-                <div class="mission-status completed">
-                    <span class="status-icon">✓</span>
-                    <span class="status-text">Completed</span>
-                    <a href="{% url 'game:mission_detail' mission.id %}" class="review-btn">Review</a>
-                </div>
-            {% elif user.playerprofile.can_access_mission %}
-                <div class="mission-status available">
-                    <a href="{% url 'game:mission_detail' mission.id %}" class="start-btn">Start Mission</a>
-                </div>
-            {% else %}
-                <div class="mission-status locked">
-                    <span class="status-icon">🔒</span>
-                    <span class="status-text">Complete previous mission first</span>
-                </div>
-            {% endif %}
         </div>
-        {% endfor %}
-    </div>
+    {% endfor %}
 </div>
 {% endblock %}
