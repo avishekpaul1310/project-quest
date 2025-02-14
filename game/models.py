@@ -30,31 +30,14 @@ class Mission(models.Model):
     mission_type = models.CharField(max_length=20, choices=MISSION_LEVELS)
     story_title = models.CharField(max_length=255)
     
-    # Rich Content Fields
-    description = models.TextField(
-        help_text="The story-driven description of the mission's context and challenge"
-    )
-    pmbok_chapter = models.CharField(max_length=255)
-    
-    # Learning Content
-    key_concepts = models.TextField(
-        help_text="Structured in sections: System for Value Delivery, Role of PM, Principles"
-    )
-    best_practices = models.TextField(
-        help_text="List of best practices specific to this mission"
-    )
-    
-    # Story Elements
-    npc_dialogue = models.TextField(
-        help_text="The king's or advisor's message to the player"
-    )
-    objective = models.TextField(
-        help_text="Clear mission objective for the player"
-    )
-    pm_concepts = models.CharField(
-        max_length=255,
-        help_text="Key PM concepts covered (e.g., 'Project Charter, Stakeholder Management')"
-    )
+    # Make these fields optional by adding null=True, blank=True
+    description = models.TextField(null=True, blank=True)
+    pmbok_chapter = models.CharField(max_length=255, null=True, blank=True)
+    key_concepts = models.TextField(null=True, blank=True)
+    best_practices = models.TextField(null=True, blank=True)
+    npc_dialogue = models.TextField(null=True, blank=True)
+    objective = models.TextField(null=True, blank=True)
+    pm_concepts = models.CharField(max_length=255, null=True, blank=True)
     
     # Gamification
     xp_reward = models.IntegerField(default=100)
