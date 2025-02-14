@@ -12,15 +12,25 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            # Clear any existing session data
-            request.session.flush()
+            # Start new session and reset progress
+            user.userprofile.start_new_session()
             return redirect('game:dashboard')
         else:
             return render(request, 'game/login.html', {'error': 'Invalid credentials'})
     return render(request, 'game/login.html')
 
 def logout_view(request):
-    logout(request)
+    if request.user.is_authenticated:
+        # Reset user progress before logout
+        profile = request.user.userprofile
+        profile.reset_progress()
+        
+        # Clear session data
+        request.session.flush()
+        
+        # Perform logout
+        logout(request)
+    
     return redirect('game:login')
 
 @login_required
