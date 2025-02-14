@@ -1,0 +1,172 @@
+/* Medieval Theme Styles */
+:root {
+    --parchment: #FDF5E6;
+    --brown-dark: #472D2D;
+    --brown-light: #8B4513;
+    --gold: #FFD700;
+}
+
+body {
+    background-color: #2C3E50;
+    color: #2C3E50;
+    font-family: 'Arial', sans-serif;
+}
+
+.medieval-title {
+    font-family: 'MedievalSharp', cursive;
+    color: var(--brown-dark);
+}
+
+.medieval-scroll {
+    background: var(--parchment);
+    border: 2px solid var(--brown-light);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.dialogue-box {
+    background: #FAEBD7;
+    border: 1px solid var(--brown-light);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.medieval-btn {
+    font-family: 'MedievalSharp', cursive;
+    background: var(--brown-light);
+    color: var(--parchment);
+    border: 2px solid var(--brown-dark);
+    transition: all 0.3s ease;
+}
+
+.medieval-btn:hover {
+    background: var(--brown-dark);
+    color: var(--parchment);
+    transform: translateY(-2px);
+}
+
+.quest-complete {
+    background: var(--gold);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+/* Mission Cards */
+.card {
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Navigation */
+.navbar {
+    background-color: var(--brown-dark) !important;
+}
+
+.navbar-brand {
+    font-family: 'MedievalSharp', cursive;
+    color: var(--gold) !important;
+}
+
+/* Quiz Styling */
+.question-card {
+    background: var(--parchment);
+    border: 2px solid var(--brown-light);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+}
+
+.option-label {
+    display: block;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    border: 1px solid var(--brown-light);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.option-label:hover {
+    background: #FAEBD7;
+}
+
+/* Add these to your existing CSS */
+.mission-header {
+    border-bottom: 2px solid var(--brown-light);
+    padding-bottom: 1.5rem;
+}
+
+.story-context {
+    background: rgba(139, 69, 19, 0.1);
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.learning-section {
+    background: #FEFEFE;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.key-concepts {
+    margin-left: 1rem;
+}
+
+.npc-dialogue {
+    position: relative;
+}
+
+.dialogue-box {
+    background: #F5E6D3;
+    border: 2px solid var(--brown-light);
+    padding: 2rem;
+    border-radius: 8px;
+    position: relative;
+}
+
+.dialogue-box:before {
+    content: "👑";
+    position: absolute;
+    top: -15px;
+    left: 20px;
+    font-size: 24px;
+}
+
+.mission-meta {
+    background: rgba(255, 215, 0, 0.1);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.feedback-box {
+    padding: 2rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid;
+}
+
+.success-feedback {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.error-feedback {
+    border-color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.explanation, .consequence {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 6px;
+    margin-top: 1rem;
+}
