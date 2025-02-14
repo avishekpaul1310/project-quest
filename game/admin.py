@@ -4,25 +4,21 @@ from django.contrib import messages
 
 @admin.register(Mission)
 class MissionAdmin(admin.ModelAdmin):
-    list_display = ('title', 'mission_type', 'pmbok_chapter', 'order', 'is_active')
-    list_filter = ('mission_type', 'is_active')
-    search_fields = ('title', 'description', 'pm_concepts', 'key_concepts')
-    
     fieldsets = (
-        ('Mission Basics', {
-            'fields': ('title', 'mission_type', 'story_title', 'order', 'is_active')
+        ('Basic Information', {
+            'fields': ('title', 'story_title', 'description', 'mission_type', 'order', 'is_active')
         }),
-        ('PMBOK Learning Content', {
-            'fields': ('pmbok_chapter', 'key_concepts', 'best_practices'),
-            'classes': ('wide',)
-        }),
-        ('Mission Details', {
-            'fields': ('objective', 'pm_concepts', 'description', 'npc_dialogue')
+        ('Learning Content', {
+            'fields': ('key_concepts', 'best_practices', 'npc_dialogue'),
+            'description': 'Add the learning content for this mission'
         }),
         ('Rewards', {
             'fields': ('xp_reward',)
-        })
+        }),
     )
+    list_display = ('title', 'story_title', 'mission_type', 'order', 'is_active')
+    list_filter = ('mission_type', 'is_active')
+    search_fields = ('title', 'story_title', 'description')
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
