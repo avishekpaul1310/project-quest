@@ -21,17 +21,20 @@ class Mission(models.Model):
     # Learning Content Fields
     key_concepts = models.TextField(
         help_text="Key project management concepts for this mission",
-        blank=True
+        blank=True,
+        default=''
     )
     
     best_practices = models.TextField(
         help_text="Best practices applied to this mission",
-        blank=True
+        blank=True,
+        default=''
     )
     
     npc_dialogue = models.TextField(
         help_text="NPC dialogue introducing the mission",
-        blank=True
+        blank=True,
+        default=''
     )
 
     def __str__(self):
