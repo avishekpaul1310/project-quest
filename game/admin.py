@@ -16,37 +16,30 @@ class MissionAdmin(admin.ModelAdmin):
             'fields': ('xp_reward',)
         }),
     )
-    list_display = ('title', 'story_title', 'mission_type', 'order', 'is_active')
+    list_display = ('story_title', 'title', 'mission_type', 'order', 'is_active')
     list_filter = ('mission_type', 'is_active')
     search_fields = ('title', 'story_title', 'description')
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('scenario_title', 'mission', 'correct_option')
-    list_filter = ('mission__mission_type', 'mission')
-    search_fields = ('scenario_title', 'scenario', 'text')
-    
     fieldsets = (
-        ('Question Basics', {
+        ('Mission Information', {
             'fields': ('mission', 'scenario_title')
         }),
-        ('Scenario', {
-            'fields': ('scenario', 'text'),
-            'classes': ('wide',)
+        ('Question Content', {
+            'fields': ('scenario', 'text')
         }),
         ('Options', {
-            'fields': (
-                'option_a', 'option_b', 'option_c', 'option_d',
-                'correct_option', 'explanation'
-            )
+            'fields': ('option_a', 'option_b', 'option_c', 'option_d', 'correct_option')
         }),
-        ('Consequences', {
-            'fields': (
-                'consequence_a', 'consequence_b',
-                'consequence_c', 'consequence_d'
-            )
+        ('Feedback', {
+            'fields': ('explanation', 'consequence_a', 'consequence_b', 'consequence_c', 'consequence_d')
         })
     )
+    list_display = ('scenario_title', 'mission', 'correct_option')
+    list_filter = ('mission', 'correct_option')
+    search_fields = ('scenario_title', 'text')
+    
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'title', 'total_score', 'xp_points')

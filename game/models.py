@@ -41,12 +41,19 @@ class Mission(models.Model):
     )
 
     def __str__(self):
-        return self.title
+        return f"{self.story_title} ({self.title})"
 
     class Meta:
         ordering = ['order']
 
 class Question(models.Model):
+    CORRECT_CHOICES = [
+        ('A', 'Option A'),
+        ('B', 'Option B'),
+        ('C', 'Option C'),
+        ('D', 'Option D'),
+    ]
+
     mission = models.ForeignKey(
         Mission,
         on_delete=models.CASCADE,
@@ -59,7 +66,11 @@ class Question(models.Model):
     option_b = models.CharField(max_length=200)
     option_c = models.CharField(max_length=200)
     option_d = models.CharField(max_length=200)
-    correct_option = models.CharField(max_length=1)
+    correct_option = models.CharField(
+        max_length=1,
+        choices=CORRECT_CHOICES,
+        help_text="Select the correct option (A, B, C, or D)"
+    )
     explanation = models.TextField()
     consequence_a = models.TextField()
     consequence_b = models.TextField()
@@ -67,7 +78,7 @@ class Question(models.Model):
     consequence_d = models.TextField()
 
     def __str__(self):
-        return f"{self.mission.title} - {self.scenario_title}"
+        return f"{self.mission.story_title} - {self.scenario_title}"
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
