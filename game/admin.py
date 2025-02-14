@@ -1,9 +1,11 @@
 from django.contrib import admin
 from .models import Mission, Question, UserProfile, UserMissionProgress
 from django.contrib import messages
+from .admin_actions import create_trade_route_questions
 
 @admin.register(Mission)
 class MissionAdmin(admin.ModelAdmin):
+    actions = [create_trade_route_questions]
     fieldsets = (
         ('Basic Information', {
             'fields': ('title', 'story_title', 'description', 'mission_type', 'order', 'is_active')
