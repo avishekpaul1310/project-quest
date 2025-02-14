@@ -146,3 +146,27 @@ body {
     border-radius: 8px;
     margin-top: 1rem;
 }
+
+.feedback-box {
+    padding: 2rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid;
+}
+
+.success-feedback {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.error-feedback {
+    border-color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.explanation, .consequence {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 6px;
+    margin-top: 1rem;
+}

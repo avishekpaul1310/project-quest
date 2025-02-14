@@ -1,44 +1,83 @@
 {% extends 'game/base.html' %}
 
-{% block title %}{{ mission.title }} - Quiz{% endblock %}
+{% block title %}{{ mission.title }} - Question {{ question_number }}{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">{{ mission.title }}</h2>
-<p class="lead mb-4">{{ mission.description }}</p>
+<div class="container">
+    <div class="medieval-scroll">
+        <div class="quiz-header text-center mb-4">
+            <h2 class="medieval-title">{{ mission.title }}</h2>
+            <p class="progress-text">Question {{ question_number }} of {{ total_questions }}</p>
+        </div>
 
-<form method="post">
-    {% csrf_token %}
-    {% for question in questions %}
-        <div class="question-card">
-            <h4>{{ forloop.counter }}. {{ question.text }}</h4>
-            <div class="options">
-                <div class="form-check">
-                    <input type="radio" name="question_{{ question.id }}" value="A" 
-                           class="form-check-input" required>
-                    <label class="form-check-label">{{ question.option_a }}</label>
+        <div class="scenario-box mb-4">
+            <h3 class="medieval-title">📜 Scenario</h3>
+            <p>{{ question.scenario }}</p>
+        </div>
+
+        {% if answer_result %}
+        <div class="answer-feedback mb-4">
+            <div class="feedback-box {% if answer_result.is_correct %}success-feedback{% else %}error-feedback{% endif %}">
+                <h4>{{ answer_result.is_correct|yesno:"✅ Excellent Choice!,❌ Not Quite Right..." }}</h4>
+                
+                <div class="explanation mt-3">
+                    <h5>📖 Explanation:</h5>
+                    <p>{{ answer_result.explanation }}</p>
                 </div>
-                <div class="form-check">
-                    <input type="radio" name="question_{{ question.id }}" value="B" 
-                           class="form-check-input">
-                    <label class="form-check-label">{{ question.option_b }}</label>
-                </div>
-                <div class="form-check">
-                    <input type="radio" name="question_{{ question.id }}" value="C" 
-                           class="form-check-input">
-                    <label class="form-check-label">{{ question.option_c }}</label>
-                </div>
-                <div class="form-check">
-                    <input type="radio" name="question_{{ question.id }}" value="D" 
-                           class="form-check-input">
-                    <label class="form-check-label">{{ question.option_d }}</label>
+                
+                <div class="consequence mt-3">
+                    <h5>🎭 What Happened:</h5>
+                    <p>{{ answer_result.consequence }}</p>
                 </div>
             </div>
+            
+            <form method="post" class="mt-4 text-center">
+                {% csrf_token %}
+                <input type="hidden" name="question_{{ question.id }}" value="{{ answer_result.answer }}">
+                <input type="hidden" name="next_question" value="true">
+                <button type="submit" class="btn btn-primary medieval-btn">
+                    {% if question_number == total_questions %}
+                        Complete Mission
+                    {% else %}
+                        Continue to Next Question
+                    {% endif %}
+                </button>
+            </form>
         </div>
-    {% endfor %}
+        {% else %}
+        <form method="post" class="quiz-form">
+            {% csrf_token %}
+            <div class="question-box mb-4">
+                <h4>{{ question.text }}</h4>
+                
+                <div class="options-list">
+                    <div class="option">
+                        <input type="radio" name="question_{{ question.id }}" value="A" id="option_a" required>
+                        <label for="option_a" class="option-label">{{ question.option_a }}</label>
+                    </div>
+                    
+                    <div class="option">
+                        <input type="radio" name="question_{{ question.id }}" value="B" id="option_b" required>
+                        <label for="option_b" class="option-label">{{ question.option_b }}</label>
+                    </div>
+                    
+                    <div class="option">
+                        <input type="radio" name="question_{{ question.id }}" value="C" id="option_c" required>
+                        <label for="option_c" class="option-label">{{ question.option_c }}</label>
+                    </div>
+                    
+                    <div class="option">
+                        <input type="radio" name="question_{{ question.id }}" value="D" id="option_d" required>
+                        <label for="option_d" class="option-label">{{ question.option_d }}</label>
+                    </div>
+                </div>
+            </div>
 
-    <div class="mt-4 mb-4">
-        <button type="submit" class="btn btn-primary">Submit Answers</button>
-        <a href="{% url 'game:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary medieval-btn">Submit Answer</button>
+            </div>
+        </form>
+        {% endif %}
     </div>
-</form>
+</div>
 {% endblock %}

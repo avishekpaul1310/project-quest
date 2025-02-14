@@ -55,46 +55,85 @@ def mission_learning(request, mission_id):
 @login_required
 def take_quiz(request, mission_id):
     mission = get_object_or_404(Mission, pk=mission_id)
-    questions = mission.questions.all()
+    questions = list(mission.questions.all())
+    progress = UserMissionProgress.objects.filter(
+        user=request.user,
+        mission=mission
+    ).first()
+    
+    current_question_index = request.session.get(f'mission_{mission_id}_question_index', 0)
+    last_answer = request.session.get(f'mission_{mission_id}_last_answer', None)
     
     if request.method == 'POST':
-        score = 0
-        for question in questions:
-            answer = request.POST.get(f'question_{question.id}')
-            if answer == question.correct_option:
-                score += 20  # 20 points per correct answer
+        question = questions[current_question_index]
+        answer = request.POST.get(f'question_{question.id}')
         
-        # Update mission progress
-        progress, created = UserMissionProgress.objects.get_or_create(
-            user=request.user,
-            mission=mission
-        )
-        progress.score = score
-        progress.completed = True
-        progress.save()
+        # Store the answer and its correctness
+        request.session[f'mission_{mission_id}_last_answer'] = {
+            'answer': answer,
+            'is_correct': answer == question.correct_option,
+            'explanation': question.explanation,
+            'consequence': getattr(question, f'consequence_{answer.lower()}')
+        }
         
-        # Update total score and XP
-        profile = request.user.userprofile
-        total_score = UserMissionProgress.objects.filter(
-            user=request.user,
-            completed=True
-        ).aggregate(Sum('score'))['score__sum'] or 0
-        profile.total_score = total_score
-        profile.xp_points += mission.xp_reward
-        
-        # Update title based on XP
-        if profile.xp_points >= 300:
-            profile.title = "Royal Project Consultant"
-        if profile.xp_points >= 600:
-            profile.title = "King's Chief Project Manager"
+        if request.POST.get('next_question'):
+            # Calculate score and move to next question
+            score = 20 if answer == question.correct_option else 0
             
-        profile.save()
+            if not progress:
+                progress = UserMissionProgress.objects.create(
+                    user=request.user,
+                    mission=mission,
+                    score=score
+                )
+            else:
+                progress.score += score
+                progress.save()
+            
+            if current_question_index + 1 < len(questions):
+                request.session[f'mission_{mission_id}_question_index'] = current_question_index + 1
+                request.session[f'mission_{mission_id}_last_answer'] = None
+                return redirect('game:take_quiz', mission_id=mission_id)
+            else:
+                # Mission completed
+                progress.completed = True
+                progress.save()
+                
+                # Update user profile
+                profile = request.user.userprofile
+                profile.total_score += progress.score
+                profile.xp_points += mission.xp_reward if progress.score >= 60 else 0
+                
+                if profile.xp_points >= 300:
+                    profile.title = "Royal Project Consultant"
+                if profile.xp_points >= 600:
+                    profile.title = "King's Chief Project Manager"
+                profile.save()
+                
+                # Clear session data
+                del request.session[f'mission_{mission_id}_question_index']
+                del request.session[f'mission_{mission_id}_last_answer']
+                
+                return redirect('game:mission_results', mission_id=mission_id)
         
-        return redirect('game:mission_results', mission_id=mission.id)
+        return render(request, 'game/take_quiz.html', {
+            'mission': mission,
+            'question': question,
+            'question_number': current_question_index + 1,
+            'total_questions': len(questions),
+            'answer_result': request.session[f'mission_{mission_id}_last_answer']
+        })
     
+    if current_question_index >= len(questions):
+        return redirect('game:mission_results', mission_id=mission_id)
+    
+    current_question = questions[current_question_index]
     return render(request, 'game/take_quiz.html', {
         'mission': mission,
-        'questions': questions
+        'question': current_question,
+        'question_number': current_question_index + 1,
+        'total_questions': len(questions),
+        'answer_result': last_answer
     })
 
 @login_required
