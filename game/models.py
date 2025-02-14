@@ -19,6 +19,19 @@ class Mission(models.Model):
     xp_reward = models.IntegerField(default=100)
     
     # Learning Content Fields - all with explicit defaults and blank=True
+    
+    objectives = models.TextField(
+        help_text="Mission objectives (one per line)",
+        default="",
+        blank=True
+    )
+    
+    topics = models.TextField(
+        help_text="Topics covered in this mission (one per line)",
+        default="",
+        blank=True
+    )
+    
     key_concepts = models.TextField(
         help_text="Key project management concepts for this mission",
         default='',
