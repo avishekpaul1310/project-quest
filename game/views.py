@@ -7,14 +7,16 @@ from django.db.models import Sum
 
 def login_view(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
+        username = request.POST['username']
+        password = request.POST['password']
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
+            # Clear any existing session data
+            request.session.flush()
             return redirect('game:dashboard')
         else:
-            messages.error(request, 'Invalid credentials')
+            return render(request, 'game/login.html', {'error': 'Invalid credentials'})
     return render(request, 'game/login.html')
 
 def logout_view(request):
@@ -23,20 +25,19 @@ def logout_view(request):
 
 @login_required
 def dashboard(request):
-    missions = Mission.objects.filter(is_active=True)
-    progress_data = {}
+    missions = Mission.objects.filter(is_active=True).order_by('order')
+    progress_data = {
+        progress.mission_id: progress 
+        for progress in UserMissionProgress.objects.filter(user=request.user)
+    }
     
-    for mission in missions:
-        progress = UserMissionProgress.objects.filter(
-            user=request.user,
-            mission=mission
-        ).first()
-        progress_data[mission.id] = progress
+    # Get user profile
+    profile = request.user.userprofile
     
     return render(request, 'game/dashboard.html', {
         'missions': missions,
         'progress_data': progress_data,
-        'user_profile': request.user.userprofile
+        'user_profile': profile
     })
 
 @login_required
@@ -110,9 +111,16 @@ def take_quiz(request, mission_id):
                     profile.title = "King's Chief Project Manager"
                 profile.save()
                 
-                # Clear session data
-                del request.session[f'mission_{mission_id}_question_index']
-                del request.session[f'mission_{mission_id}_last_answer']
+                # Safely clear session data
+                try:
+                    del request.session[f'mission_{mission_id}_question_index']
+                except KeyError:
+                    pass
+                    
+                try:
+                    del request.session[f'mission_{mission_id}_last_answer']
+                except KeyError:
+                    pass
                 
                 return redirect('game:mission_results', mission_id=mission_id)
         
@@ -124,6 +132,7 @@ def take_quiz(request, mission_id):
             'answer_result': request.session[f'mission_{mission_id}_last_answer']
         })
     
+    # If there are no more questions, redirect to results
     if current_question_index >= len(questions):
         return redirect('game:mission_results', mission_id=mission_id)
     

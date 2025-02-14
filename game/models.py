@@ -11,6 +11,16 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s Profile ({self.title})"
+    
+    def reset_progress(self):
+        """Reset user's progress, scores, and title"""
+        self.total_score = 0
+        self.xp_points = 0
+        self.title = "Apprentice Project Manager"
+        self.save()
+        
+        # Delete all mission progress
+        UserMissionProgress.objects.filter(user=self.user).delete()
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
