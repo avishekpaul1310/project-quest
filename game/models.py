@@ -18,23 +18,26 @@ class Mission(models.Model):
     is_active = models.BooleanField(default=True)
     xp_reward = models.IntegerField(default=100)
     
-    # Learning Content Fields
+    # Learning Content Fields - all with explicit defaults and blank=True
     key_concepts = models.TextField(
         help_text="Key project management concepts for this mission",
+        default='',
         blank=True,
-        default=''
+        null=True  # Adding null=True to handle existing records
     )
     
     best_practices = models.TextField(
         help_text="Best practices applied to this mission",
+        default='',
         blank=True,
-        default=''
+        null=True  # Adding null=True to handle existing records
     )
     
     npc_dialogue = models.TextField(
         help_text="NPC dialogue introducing the mission",
+        default='',
         blank=True,
-        default=''
+        null=True  # Adding null=True to handle existing records
     )
 
     def __str__(self):
