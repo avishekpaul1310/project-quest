@@ -9,39 +9,6 @@
     </h2>
 </div>
 
-<!-- Mission Status Summary -->
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex justify-content-around align-items-center text-center">
-                    <div class="stat-box">
-                        <i class="fas fa-chart-pie fa-2x text-primary mb-2"></i>
-                        <h5 class="medieval-font mb-0">Progress</h5>
-                        <p class="h4">{{ completion_percentage }}%</p>
-                        <small class="text-muted">{{ completed_missions }} / {{ mission_status|length }} missions</small>
-                    </div>
-                    <div class="stat-box">
-                        <i class="fas fa-star fa-2x text-warning mb-2"></i>
-                        <h5 class="medieval-font mb-0">Total Score</h5>
-                        <p class="h4">{{ user.userprofile.total_score }}</p>
-                    </div>
-                    <div class="stat-box">
-                        <i class="fas fa-bolt fa-2x text-info mb-2"></i>
-                        <h5 class="medieval-font mb-0">Total XP</h5>
-                        <p class="h4">{{ user.userprofile.total_xp }}</p>
-                    </div>
-                    <div class="stat-box">
-                        <i class="fas fa-sign-out-alt fa-2x text-danger mb-2"></i>
-                        <h5 class="medieval-font mb-0">Logout</h5>
-                        <a href="{% url 'logout' %}" class="btn btn-danger">Exit Quest</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Available Missions -->
 <div class="row">
     {% for status in mission_status %}
@@ -152,19 +119,6 @@
 {% endif %}
 
 <style>
-.stat-box {
-    padding: 20px;
-    border-radius: 10px;
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-}
-
-.stat-box:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
 .mission-card {
     transition: all 0.3s ease;
 }
@@ -176,6 +130,12 @@
 
 .mission-locked {
     opacity: 0.8;
+}
+
+.navbar-text span {
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
 }
 </style>
 {% endblock %}

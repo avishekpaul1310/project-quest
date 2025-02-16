@@ -18,13 +18,25 @@
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{% static 'game/images/favicon.ico' %}">
+
+    <style>
+        .nav-stat {
+            padding: 4px 8px;
+            margin: 0 4px;
+            border-radius: 6px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .nav-stat i {
+            margin-right: 4px;
+        }
+        .navbar {
+            background-color: #1a237e;
+            padding: 0.8rem 1rem;
+        }
+    </style>
 </head>
 <body class="bg-light">
-    <!-- Progress Bar -->
-    <div class="progress fixed-top" style="height: 8px; z-index: 1031;">
-        <div class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
-    </div>
-
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
@@ -36,36 +48,35 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarContent">
-                    <ul class="navbar-nav ms-auto">
+                    <ul class="navbar-nav ms-auto align-items-center">
                         <li class="nav-item">
-                            <span class="nav-link medieval-font">
-                                <i class="fas fa-user"></i> {{ user.username }}
+                            <span class="nav-stat">
+                                <i class="fas fa-user"></i>{{ user.username }}
                             </span>
                         </li>
                         <li class="nav-item">
-                            <span class="nav-link medieval-font">
-                                <i class="fas fa-crown"></i> {{ user.userprofile.title }}
+                            <span class="nav-stat">
+                                <i class="fas fa-crown"></i>{{ user.userprofile.title }}
                             </span>
                         </li>
                         <li class="nav-item">
-                            <span class="nav-link">
-                                <span class="badge bg-warning text-dark">
-                                    <i class="fas fa-star"></i> Score: {{ user.userprofile.total_score }}
-                                </span>
+                            <span class="nav-stat">
+                                <i class="fas fa-chart-pie"></i>Progress: {{ completion_percentage }}%
                             </span>
                         </li>
                         <li class="nav-item">
-                            <span class="nav-link">
-                                <span class="badge bg-info text-dark">
-                                    <i class="fas fa-bolt"></i> XP: {{ user.userprofile.total_xp }}
-                                </span>
+                            <span class="nav-stat">
+                                <i class="fas fa-star"></i>Score: {{ user.userprofile.total_score }}
                             </span>
                         </li>
                         <li class="nav-item">
-                            <a href="{% url 'logout' %}" class="btn btn-danger">
-                                <button class="btn btn-outline-light btn-sm">
-                                    <i class="fas fa-sign-out-alt"></i> Logout
-                                </button>
+                            <span class="nav-stat">
+                                <i class="fas fa-bolt"></i>XP: {{ user.userprofile.total_xp }}
+                            </span>
+                        </li>
+                        <li class="nav-item ms-2">
+                            <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">
+                                <i class="fas fa-sign-out-alt"></i> Logout
                             </a>
                         </li>
                     </ul>
