@@ -22,11 +22,8 @@ from django.views.generic import RedirectView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('game.urls')),
-    path('login/', auth_views.LoginView.as_view(
-        template_name='game/login.html',
-        redirect_authenticated_user=True
-    ), name='login'),
+    path('', include(('game.urls', 'game'), namespace='game')),
+    path('login/', auth_views.LoginView.as_view(template_name='game/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(
         template_name='game/logout.html',
         next_page='login'
