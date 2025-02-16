@@ -132,3 +132,5 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 LOGIN_REDIRECT_URL = 'game:dashboard'
 LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = 'login'
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
