@@ -41,6 +41,31 @@
     </div>
 </div>
 
+<div class="d-flex justify-content-around align-items-center text-center">
+    <!-- Keep existing status boxes -->
+    <div>
+        <i class="fas fa-scroll fa-2x text-primary mb-2"></i>
+        <h5 class="medieval-font mb-0">Total Missions</h5>
+        <p class="h4">{{ mission_status|length }}</p>
+    </div>
+    <div>
+        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+        <h5 class="medieval-font mb-0">Completed</h5>
+        <p class="h4">{{ completed_missions }}</p>
+        <small class="text-success">{{ completion_percentage }}% Complete</small>
+    </div>
+    <div>
+        <i class="fas fa-star fa-2x text-warning mb-2"></i>
+        <h5 class="medieval-font mb-0">Total Score</h5>
+        <p class="h4">{{ user.userprofile.total_score }}</p>
+    </div>
+    <div>
+        <i class="fas fa-bolt fa-2x text-info mb-2"></i>
+        <h5 class="medieval-font mb-0">Total XP</h5>
+        <p class="h4">{{ user.userprofile.total_xp }}</p>
+    </div>
+</div>
+
 <!-- Available Missions -->
 <div class="row">
     {% for status in mission_status %}
