@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Quest - {% block title %}{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
     <style>
         .medieval-font {
             font-family: 'Cinzel', serif;
@@ -12,6 +13,7 @@
         .mission-card {
             border: 2px solid #daa520;
             background-color: #fffaf0;
+            margin-bottom: 20px;
         }
         .mission-locked {
             opacity: 0.7;
@@ -20,18 +22,33 @@
         .title-banner {
             background-color: #2c3e50;
             color: #daa520;
-            padding: 10px;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+        .question-card {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .navbar {
+            background-color: #2c3e50 !important;
+            border-bottom: 2px solid #daa520;
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand medieval-font" href="{% url 'game:dashboard' %}">Project Quest</a>
+            <a class="navbar-brand medieval-font" href="{% url 'game:dashboard' %}">
+                🏰 Project Quest
+            </a>
             {% if user.is_authenticated %}
                 <div class="navbar-text text-light">
-                    {{ user.userprofile.title }} | Score: {{ user.userprofile.total_score }}
+                    <span class="medieval-font">{{ user.userprofile.title }}</span>
+                    <span class="badge bg-warning text-dark ms-2">Score: {{ user.userprofile.total_score }}</span>
+                    <span class="badge bg-info text-dark ms-2">XP: {{ user.userprofile.total_xp }}</span>
                     <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm ms-3">Logout</a>
                 </div>
             {% endif %}

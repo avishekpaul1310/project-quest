@@ -8,34 +8,27 @@
         <h2>{{ mission.title }}</h2>
     </div>
     <div class="card-body">
-        <!-- NPC Dialogue Section -->
         <div class="npc-dialogue mb-4 p-3 bg-light border rounded">
             <h4 class="medieval-font text-primary">
                 <i class="fas fa-crown"></i> {{ mission.npc_name }} speaks:
             </h4>
-            <p class="font-italic">{{ mission.npc_dialogue }}</p>
+            <p class="font-italic">{{ mission.npc_dialogue|linebreaks }}</p>
         </div>
 
-        <!-- Mission Objective -->
         <div class="objective-section mb-4">
             <h4 class="medieval-font text-success">
                 <i class="fas fa-bullseye"></i> Mission Objective
             </h4>
-            <p>{{ mission.objective }}</p>
+            <p>{{ mission.objective|linebreaks }}</p>
         </div>
 
-        <!-- Key PM Concepts -->
         <div class="concepts-section mb-4">
             <h4 class="medieval-font text-info">
                 <i class="fas fa-book"></i> Key PM Concepts
-                {% if mission.pmbok_reference %}
-                    <small>({{ mission.pmbok_reference }})</small>
-                {% endif %}
             </h4>
             {{ mission.key_concepts|linebreaks }}
         </div>
 
-        <!-- Best Practices -->
         <div class="practices-section mb-4">
             <h4 class="medieval-font text-warning">
                 <i class="fas fa-shield-alt"></i> Best Practices
@@ -43,17 +36,9 @@
             {{ mission.best_practices|linebreaks }}
         </div>
 
-        <!-- Rewards Section -->
-        <div class="rewards-section mb-4 text-center">
-            <h4 class="medieval-font text-danger">
-                <i class="fas fa-gem"></i> Rewards
-            </h4>
-            <p>XP Reward: {{ mission.xp_reward }}</p>
-        </div>
-
         <div class="text-center mt-4">
             <a href="{% url 'game:mission_quiz' mission.id %}" class="btn btn-primary btn-lg">
-                Begin Mission
+                Begin Mission Challenge
             </a>
         </div>
     </div>

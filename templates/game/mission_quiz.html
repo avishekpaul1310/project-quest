@@ -12,12 +12,12 @@
             {% csrf_token %}
             {% for question in questions %}
                 <div class="question-card mb-4">
-                    <h5 class="medieval-font">Scenario:</h5>
-                    <p>{{ question.scenario }}</p>
+                    <h5 class="medieval-font">Scenario {{ forloop.counter }}:</h5>
+                    <p class="mb-4">{{ question.scenario }}</p>
                     
                     <div class="options">
                         {% for option in "ABCD" %}
-                            <div class="form-check mb-2">
+                            <div class="form-check mb-3">
                                 <input class="form-check-input" type="radio" 
                                        name="question_{{ question.id }}" 
                                        id="q{{ question.id }}{{ option }}"
@@ -32,7 +32,9 @@
                         {% endfor %}
                     </div>
                 </div>
-                <hr>
+                {% if not forloop.last %}
+                    <hr>
+                {% endif %}
             {% endfor %}
             
             <div class="text-center mt-4">

@@ -3,14 +3,10 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col">
-        <div class="title-banner rounded">
-            <h2 class="medieval-font text-center mb-0">
-                Welcome, {{ user.username }} - {{ user.userprofile.title }}
-            </h2>
-        </div>
-    </div>
+<div class="title-banner rounded">
+    <h2 class="medieval-font text-center mb-0">
+        Welcome, {{ user.username }} - {{ user.userprofile.title }}
+    </h2>
 </div>
 
 <div class="row">
@@ -22,8 +18,14 @@
                 </div>
                 <div class="card-body">
                     <p>{{ status.mission.description }}</p>
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            🏆 XP Reward: {{ status.mission.xp_reward }}
+                        </small>
+                    </div>
                     {% if status.completed %}
                         <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
                             Mission Complete! Score: {{ status.score }}
                         </div>
                     {% else %}
