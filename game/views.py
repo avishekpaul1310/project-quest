@@ -6,23 +6,30 @@ from django.db.models import Sum
 
 @login_required
 def dashboard(request):
-    missions = Mission.objects.filter(is_active=True)
+    missions = Mission.objects.filter(is_active=True).order_by('order')
     user_progress = UserMissionProgress.objects.filter(user=request.user)
-    total_score = user_progress.aggregate(Sum('score'))['score__sum'] or 0
     
     mission_status = []
+    completed_missions = 0
+    
     for mission in missions:
         progress = user_progress.filter(mission=mission).first()
+        completed = progress.completed if progress else False
+        if completed:
+            completed_missions += 1
+            
         mission_status.append({
             'mission': mission,
-            'completed': progress.completed if progress else False,
+            'completed': completed,
             'score': progress.score if progress else 0,
         })
     
-    return render(request, 'game/dashboard.html', {
+    context = {
         'mission_status': mission_status,
-        'total_score': total_score,
-    })
+        'completed_missions': completed_missions,
+    }
+    
+    return render(request, 'game/dashboard.html', context)
 
 @login_required
 def mission_detail(request, mission_id):
