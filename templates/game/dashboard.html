@@ -9,19 +9,67 @@
     </h2>
 </div>
 
+<!-- Mission Status Summary -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-around align-items-center text-center">
+                    <div>
+                        <i class="fas fa-scroll fa-2x text-primary mb-2"></i>
+                        <h5 class="medieval-font mb-0">Total Missions</h5>
+                        <p class="h4">{{ mission_status|length }}</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <h5 class="medieval-font mb-0">Completed</h5>
+                        <p class="h4">{{ completed_missions }}</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-star fa-2x text-warning mb-2"></i>
+                        <h5 class="medieval-font mb-0">Total Score</h5>
+                        <p class="h4">{{ user.userprofile.total_score }}</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-bolt fa-2x text-info mb-2"></i>
+                        <h5 class="medieval-font mb-0">Total XP</h5>
+                        <p class="h4">{{ user.userprofile.total_xp }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Available Missions -->
 <div class="row">
     {% for status in mission_status %}
         <div class="col-md-6 mb-4">
-            {% with previous_missions=mission_status|slice:":forloop.counter0"|last %}
-            <div class="card mission-card {% if not status.completed and forloop.counter0 > 0 and not previous_missions.completed %}mission-locked{% endif %}">
-                <div class="card-header medieval-font">
-                    <h3>{{ status.mission.title }}</h3>
+            <div class="card mission-card {% if not status.accessible and not status.completed %}mission-locked{% endif %}">
+                <div class="card-header medieval-font d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">
+                        {% if status.completed %}
+                            <i class="fas fa-check-circle text-success"></i>
+                        {% elif status.accessible %}
+                            <i class="fas fa-unlock text-primary"></i>
+                        {% else %}
+                            <i class="fas fa-lock text-secondary"></i>
+                        {% endif %}
+                        {{ status.mission.title }}
+                    </h3>
+                    {% if status.completed %}
+                        <span class="badge bg-success">Completed</span>
+                    {% elif status.accessible %}
+                        <span class="badge bg-primary">Available</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Locked</span>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     <p>{{ status.mission.description }}</p>
                     <div class="mb-3">
                         <small class="text-muted">
-                            🏆 XP Reward: {{ status.mission.xp_reward }}
+                            <i class="fas fa-trophy"></i> XP Reward: {{ status.mission.xp_reward }}
                         </small>
                     </div>
                     {% if status.completed %}
@@ -30,7 +78,7 @@
                             Mission Complete! Score: {{ status.score }}
                         </div>
                     {% else %}
-                        {% if forloop.counter0 == 0 or previous_missions.completed %}
+                        {% if status.accessible %}
                             <a href="{% url 'game:mission_detail' status.mission.id %}" 
                                class="btn btn-primary">
                                <i class="fas fa-play-circle"></i> Start Mission
@@ -42,39 +90,84 @@
                         {% endif %}
                     {% endif %}
                 </div>
+                <div class="card-footer bg-transparent">
+                    <small class="text-muted">
+                        {% if status.completed %}
+                            <i class="fas fa-calendar-check"></i> Completed
+                        {% elif status.accessible %}
+                            <i class="fas fa-calendar-alt"></i> Ready to start
+                        {% else %}
+                            <i class="fas fa-lock"></i> Unlock by completing previous mission
+                        {% endif %}
+                    </small>
+                </div>
             </div>
-            {% endwith %}
         </div>
     {% empty %}
         <div class="col-12">
             <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i> No missions available at the moment.
+                Please check back later.
             </div>
         </div>
     {% endfor %}
 </div>
 
-{% if mission_status %}
+<!-- Achievements Section (if you want to add it) -->
+{% if user.userprofile.total_xp > 0 %}
 <div class="mt-4">
-    <h4 class="medieval-font mb-3">Mission Status</h4>
+    <h4 class="medieval-font mb-3">
+        <i class="fas fa-medal"></i> Your Achievements
+    </h4>
     <div class="card">
         <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <i class="fas fa-scroll fa-2x text-primary"></i>
-                    <span class="ms-2 medieval-font">Total Missions: {{ mission_status|length }}</span>
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    {% if user.userprofile.total_xp >= 600 %}
+                        <i class="fas fa-crown fa-3x text-warning"></i>
+                    {% elif user.userprofile.total_xp >= 300 %}
+                        <i class="fas fa-star fa-3x text-primary"></i>
+                    {% else %}
+                        <i class="fas fa-medal fa-3x text-success"></i>
+                    {% endif %}
                 </div>
                 <div>
-                    <i class="fas fa-check-circle fa-2x text-success"></i>
-                    <span class="ms-2 medieval-font">Completed: {{ completed_missions }}</span>
-                </div>
-                <div>
-                    <i class="fas fa-star fa-2x text-warning"></i>
-                    <span class="ms-2 medieval-font">Total Score: {{ user.userprofile.total_score }}</span>
+                    <h5 class="medieval-font mb-1">Current Title</h5>
+                    <p class="mb-0">{{ user.userprofile.title }}</p>
+                    {% if user.userprofile.total_xp < 300 %}
+                        <small class="text-muted">
+                            Next title at 300 XP: "Royal Project Consultant"
+                        </small>
+                    {% elif user.userprofile.total_xp < 600 %}
+                        <small class="text-muted">
+                            Next title at 600 XP: "King's Chief Project Manager"
+                        </small>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add hover effects to unlocked mission cards
+    const unlockedMissions = document.querySelectorAll('.mission-card:not(.mission-locked)');
+    unlockedMissions.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+            this.style.transition = 'all 0.3s ease';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+});
+</script>
 {% endblock %}

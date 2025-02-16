@@ -1,0 +1,57 @@
+{% extends 'game/base.html' %}
+
+{% block title %}Quiz Results - {{ mission.title }}{% endblock %}
+
+{% block content %}
+<div class="card mission-card">
+    <div class="card-header medieval-font">
+        <h2>Mission Results: {{ mission.title }}</h2>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info mb-4">
+            <h4 class="medieval-font">Your Performance</h4>
+            <p>Final Score: {{ score }} points</p>
+            {% if xp_earned > 0 %}
+                <p>XP Earned: {{ xp_earned }}</p>
+            {% endif %}
+        </div>
+
+        <h4 class="medieval-font mb-3">Detailed Results</h4>
+        {% for result in quiz_results %}
+            <div class="card mb-4 {% if result.is_correct %}border-success{% else %}border-danger{% endif %}">
+                <div class="card-header">
+                    <h5 class="mb-0">Question {{ forloop.counter }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">{{ result.question.scenario }}</p>
+                    
+                    <div class="mb-3">
+                        <strong>Your Answer:</strong> 
+                        <span class="{% if result.is_correct %}text-success{% else %}text-danger{% endif %}">
+                            Option {{ result.user_answer }}
+                        </span>
+                    </div>
+                    
+                    {% if not result.is_correct %}
+                        <div class="mb-3">
+                            <strong>Correct Answer:</strong> 
+                            <span class="text-success">Option {{ result.correct_answer }}</span>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="alert {% if result.is_correct %}alert-success{% else %}alert-info{% endif %} mb-0">
+                        <i class="fas {% if result.is_correct %}fa-check-circle{% else %}fa-info-circle{% endif %}"></i>
+                        {{ result.explanation }}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        
+        <div class="text-center mt-4">
+            <a href="{% url 'game:dashboard' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-home"></i> Return to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

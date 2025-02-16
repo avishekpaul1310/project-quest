@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Mission, Question, UserMissionProgress
 from django.db.models import Sum
+from django.contrib.auth.views import LogoutView
+from django.urls import reverse_lazy
 
 @login_required
 def dashboard(request):
@@ -11,18 +13,21 @@ def dashboard(request):
     
     mission_status = []
     completed_missions = 0
+    previous_completed = True  # First mission is always accessible
     
     for mission in missions:
         progress = user_progress.filter(mission=mission).first()
         completed = progress.completed if progress else False
         if completed:
             completed_missions += 1
-            
+        
         mission_status.append({
             'mission': mission,
             'completed': completed,
             'score': progress.score if progress else 0,
+            'accessible': previous_completed  # Only accessible if previous mission is completed
         })
+        previous_completed = completed  # Update for next iteration
     
     context = {
         'mission_status': mission_status,
@@ -51,32 +56,25 @@ def mission_quiz(request, mission_id):
     mission = get_object_or_404(Mission, pk=mission_id)
     questions = Question.objects.filter(mission=mission)
     
-    # If there are no questions, redirect back to mission detail
-    if not questions.exists():
-        messages.warning(request, "No questions available for this mission yet.")
-        return redirect('game:mission_detail', mission_id=mission_id)
-    
-    # Check if mission is already completed
-    progress = UserMissionProgress.objects.filter(
-        user=request.user,
-        mission=mission,
-        completed=True
-    ).first()
-    
-    if progress:
-        messages.info(request, "You've already completed this mission!")
-        return redirect('game:dashboard')
-    
     if request.method == 'POST':
         score = 0
-        total_questions = questions.count()
+        quiz_results = []
         
         for question in questions:
             answer = request.POST.get(f'question_{question.id}')
-            if answer == question.correct_option:
+            is_correct = answer == question.correct_option
+            if is_correct:
                 score += 10
+                
+            quiz_results.append({
+                'question': question,
+                'user_answer': answer,
+                'correct_answer': question.correct_option,
+                'is_correct': is_correct,
+                'explanation': question.explanation  # Add this field to your Question model
+            })
         
-        # Save progress and award XP
+        # Save progress and update profile as before
         progress, created = UserMissionProgress.objects.get_or_create(
             user=request.user,
             mission=mission,
@@ -88,31 +86,33 @@ def mission_quiz(request, mission_id):
             progress.score = score
             progress.save()
         
-        # Update user profile score and XP
         profile = request.user.userprofile
         profile.total_score = UserMissionProgress.objects.filter(
             user=request.user
         ).aggregate(Sum('score'))['score__sum'] or 0
         
-        # Award XP if mission was not previously completed
         if created:
             profile.total_xp += mission.xp_reward
         
-        # Update title based on XP
         if profile.total_xp >= 300:
             profile.title = "Royal Project Consultant"
         if profile.total_xp >= 600:
             profile.title = "King's Chief Project Manager"
         profile.save()
         
-        messages.success(
-            request,
-            f'Mission completed! You scored {score} points and earned {mission.xp_reward} XP!'
-        )
-        return redirect('game:dashboard')
+        # Render results page instead of redirecting
+        return render(request, 'game/quiz_results.html', {
+            'mission': mission,
+            'quiz_results': quiz_results,
+            'score': score,
+            'xp_earned': mission.xp_reward if created else 0
+        })
     
-    # For GET request, render the quiz template
     return render(request, 'game/mission_quiz.html', {
         'mission': mission,
         'questions': questions,
     })
+
+# Add this class for proper logout handling
+class CustomLogoutView(LogoutView):
+    next_page = reverse_lazy('login')

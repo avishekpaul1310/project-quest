@@ -63,7 +63,11 @@ class Question(models.Model):
             ('D', self.option_d)
         ]
     
-    explanation = models.TextField(help_text="Explanation for the correct answer")
+    explanation = models.TextField(
+        help_text="Explanation of the correct answer",
+        default="",
+        blank=True
+    )
     
     def __str__(self):
         return f"Question for {self.mission.title}"
