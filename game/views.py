@@ -12,6 +12,7 @@ def dashboard(request):
     mission_status = []
     completed_missions = 0
     previous_completed = True
+    total_missions = missions.count()
     
     for mission in missions:
         progress = user_progress.filter(mission=mission).first()
@@ -27,9 +28,14 @@ def dashboard(request):
         })
         previous_completed = completed
     
+    # Calculate completion percentage
+    completion_percentage = (completed_missions / total_missions * 100) if total_missions > 0 else 0
+    
     context = {
         'mission_status': mission_status,
         'completed_missions': completed_missions,
+        'total_missions': total_missions,
+        'completion_percentage': round(completion_percentage, 1),  # Round to 1 decimal place
     }
     
     return render(request, 'game/dashboard.html', context)
