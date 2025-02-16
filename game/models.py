@@ -53,6 +53,16 @@ class Question(models.Model):
         max_length=1,
         choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')]
     )
+
+    def get_options(self):
+        """Returns a list of tuples with option letters and their corresponding text."""
+        return [
+            ('A', self.option_a),
+            ('B', self.option_b),
+            ('C', self.option_c),
+            ('D', self.option_d)
+        ]
+    
     explanation = models.TextField(help_text="Explanation for the correct answer")
     
     def __str__(self):

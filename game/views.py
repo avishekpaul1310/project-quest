@@ -51,6 +51,22 @@ def mission_quiz(request, mission_id):
     mission = get_object_or_404(Mission, pk=mission_id)
     questions = Question.objects.filter(mission=mission)
     
+    # If there are no questions, redirect back to mission detail
+    if not questions.exists():
+        messages.warning(request, "No questions available for this mission yet.")
+        return redirect('game:mission_detail', mission_id=mission_id)
+    
+    # Check if mission is already completed
+    progress = UserMissionProgress.objects.filter(
+        user=request.user,
+        mission=mission,
+        completed=True
+    ).first()
+    
+    if progress:
+        messages.info(request, "You've already completed this mission!")
+        return redirect('game:dashboard')
+    
     if request.method == 'POST':
         score = 0
         total_questions = questions.count()
@@ -94,3 +110,9 @@ def mission_quiz(request, mission_id):
             f'Mission completed! You scored {score} points and earned {mission.xp_reward} XP!'
         )
         return redirect('game:dashboard')
+    
+    # For GET request, render the quiz template
+    return render(request, 'game/mission_quiz.html', {
+        'mission': mission,
+        'questions': questions,
+    })
