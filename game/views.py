@@ -1,10 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Mission, Question, UserMissionProgress
 from django.db.models import Sum
-from django.contrib.auth.views import LogoutView
-from django.urls import reverse_lazy
+from .models import Mission, Question, UserMissionProgress, UserProfile
 
 @login_required
 def dashboard(request):
@@ -13,7 +11,7 @@ def dashboard(request):
     
     mission_status = []
     completed_missions = 0
-    previous_completed = True  # First mission is always accessible
+    previous_completed = True
     
     for mission in missions:
         progress = user_progress.filter(mission=mission).first()
@@ -25,9 +23,9 @@ def dashboard(request):
             'mission': mission,
             'completed': completed,
             'score': progress.score if progress else 0,
-            'accessible': previous_completed  # Only accessible if previous mission is completed
+            'accessible': previous_completed
         })
-        previous_completed = completed  # Update for next iteration
+        previous_completed = completed
     
     context = {
         'mission_status': mission_status,
@@ -39,22 +37,26 @@ def dashboard(request):
 @login_required
 def mission_detail(request, mission_id):
     mission = get_object_or_404(Mission, pk=mission_id)
-    progress = UserMissionProgress.objects.filter(
-        user=request.user, mission=mission
+    user_progress = UserMissionProgress.objects.filter(
+        user=request.user,
+        mission=mission
     ).first()
     
-    if progress and progress.completed:
-        messages.info(request, "You've already completed this mission!")
-        return redirect('game:dashboard')
-    
-    return render(request, 'game/mission_detail.html', {
+    context = {
         'mission': mission,
-    })
+        'completed': user_progress.completed if user_progress else False
+    }
+    
+    return render(request, 'game/mission_detail.html', context)
 
 @login_required
 def mission_quiz(request, mission_id):
     mission = get_object_or_404(Mission, pk=mission_id)
     questions = Question.objects.filter(mission=mission)
+    
+    if not questions.exists():
+        messages.warning(request, "No questions available for this mission yet.")
+        return redirect('game:mission_detail', mission_id=mission_id)
     
     if request.method == 'POST':
         score = 0
@@ -65,16 +67,15 @@ def mission_quiz(request, mission_id):
             is_correct = answer == question.correct_option
             if is_correct:
                 score += 10
-                
+            
             quiz_results.append({
                 'question': question,
                 'user_answer': answer,
                 'correct_answer': question.correct_option,
                 'is_correct': is_correct,
-                'explanation': question.explanation  # Add this field to your Question model
+                'explanation': question.explanation
             })
         
-        # Save progress and update profile as before
         progress, created = UserMissionProgress.objects.get_or_create(
             user=request.user,
             mission=mission,
@@ -100,7 +101,6 @@ def mission_quiz(request, mission_id):
             profile.title = "King's Chief Project Manager"
         profile.save()
         
-        # Render results page instead of redirecting
         return render(request, 'game/quiz_results.html', {
             'mission': mission,
             'quiz_results': quiz_results,
@@ -112,7 +112,3 @@ def mission_quiz(request, mission_id):
         'mission': mission,
         'questions': questions,
     })
-
-# Add this class for proper logout handling
-class CustomLogoutView(LogoutView):
-    next_page = reverse_lazy('login')

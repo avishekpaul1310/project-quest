@@ -22,7 +22,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('game.urls')),
+    path('', include('game.urls')),  # This includes the game URLs with namespace
     path('login/', auth_views.LoginView.as_view(
         template_name='game/login.html',
         redirect_authenticated_user=True
