@@ -26,14 +26,13 @@ class Mission(models.Model):
     description = models.TextField()
     order = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
-    
-    # New fields for enhanced mission content
     objective = models.TextField(help_text="Main objective of the mission")
     key_concepts = models.TextField(help_text="Key PM concepts to learn in this mission")
     best_practices = models.TextField(help_text="Best practices for the mission")
     npc_name = models.CharField(max_length=100, help_text="Name of the NPC giving the mission")
     npc_dialogue = models.TextField(help_text="Dialogue from the NPC")
     xp_reward = models.IntegerField(default=100, help_text="XP points awarded for completing the mission")
+    content = models.TextField(help_text="Mission content/learning material", blank=True)
     
     
     class Meta:
