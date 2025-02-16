@@ -1,0 +1,27 @@
+{% extends 'game/base.html' %}
+
+{% block title %}Logout{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card mission-card">
+            <div class="card-header medieval-font text-center">
+                <h3>Logout Confirmation</h3>
+            </div>
+            <div class="card-body text-center">
+                <p>Are you sure you want to logout?</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-sign-out-alt"></i> Confirm Logout
+                    </button>
+                    <a href="{% url 'game:dashboard' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
