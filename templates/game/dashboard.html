@@ -15,54 +15,30 @@
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-around align-items-center text-center">
-                    <div>
-                        <i class="fas fa-scroll fa-2x text-primary mb-2"></i>
-                        <h5 class="medieval-font mb-0">Total Missions</h5>
-                        <p class="h4">{{ mission_status|length }}</p>
+                    <div class="stat-box">
+                        <i class="fas fa-chart-pie fa-2x text-primary mb-2"></i>
+                        <h5 class="medieval-font mb-0">Progress</h5>
+                        <p class="h4">{{ completion_percentage }}%</p>
+                        <small class="text-muted">{{ completed_missions }} / {{ mission_status|length }} missions</small>
                     </div>
-                    <div>
-                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
-                        <h5 class="medieval-font mb-0">Completed</h5>
-                        <p class="h4">{{ completed_missions }}</p>
-                    </div>
-                    <div>
+                    <div class="stat-box">
                         <i class="fas fa-star fa-2x text-warning mb-2"></i>
                         <h5 class="medieval-font mb-0">Total Score</h5>
                         <p class="h4">{{ user.userprofile.total_score }}</p>
                     </div>
-                    <div>
+                    <div class="stat-box">
                         <i class="fas fa-bolt fa-2x text-info mb-2"></i>
                         <h5 class="medieval-font mb-0">Total XP</h5>
                         <p class="h4">{{ user.userprofile.total_xp }}</p>
                     </div>
+                    <div class="stat-box">
+                        <i class="fas fa-sign-out-alt fa-2x text-danger mb-2"></i>
+                        <h5 class="medieval-font mb-0">Logout</h5>
+                        <a href="{% url 'logout' %}" class="btn btn-danger">Exit Quest</a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
-<div class="d-flex justify-content-around align-items-center text-center">
-    <!-- Keep existing status boxes -->
-    <div>
-        <i class="fas fa-scroll fa-2x text-primary mb-2"></i>
-        <h5 class="medieval-font mb-0">Total Missions</h5>
-        <p class="h4">{{ mission_status|length }}</p>
-    </div>
-    <div>
-        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
-        <h5 class="medieval-font mb-0">Completed</h5>
-        <p class="h4">{{ completed_missions }}</p>
-        <small class="text-success">{{ completion_percentage }}% Complete</small>
-    </div>
-    <div>
-        <i class="fas fa-star fa-2x text-warning mb-2"></i>
-        <h5 class="medieval-font mb-0">Total Score</h5>
-        <p class="h4">{{ user.userprofile.total_score }}</p>
-    </div>
-    <div>
-        <i class="fas fa-bolt fa-2x text-info mb-2"></i>
-        <h5 class="medieval-font mb-0">Total XP</h5>
-        <p class="h4">{{ user.userprofile.total_xp }}</p>
     </div>
 </div>
 
@@ -106,7 +82,7 @@
                         {% if status.accessible %}
                             <a href="{% url 'game:mission_detail' status.mission.id %}" 
                                class="btn btn-primary">
-                               <i class="fas fa-play-circle"></i> Start Mission
+                                <i class="fas fa-play-circle"></i> Start Mission
                             </a>
                         {% else %}
                             <button class="btn btn-secondary" disabled>
@@ -138,7 +114,7 @@
     {% endfor %}
 </div>
 
-<!-- Achievements Section (if you want to add it) -->
+<!-- Achievements Section -->
 {% if user.userprofile.total_xp > 0 %}
 <div class="mt-4">
     <h4 class="medieval-font mb-3">
@@ -174,25 +150,32 @@
     </div>
 </div>
 {% endif %}
-{% endblock %}
 
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add hover effects to unlocked mission cards
-    const unlockedMissions = document.querySelectorAll('.mission-card:not(.mission-locked)');
-    unlockedMissions.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-5px)';
-            this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-            this.style.transition = 'all 0.3s ease';
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0)';
-            this.style.boxShadow = 'none';
-        });
-    });
-});
-</script>
+<style>
+.stat-box {
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.stat-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.mission-card {
+    transition: all 0.3s ease;
+}
+
+.mission-card:not(.mission-locked):hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.mission-locked {
+    opacity: 0.8;
+}
+</style>
 {% endblock %}
